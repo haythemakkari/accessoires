@@ -19,15 +19,15 @@ export default async function OrderDetail({ params }: { params: Promise<{ id: st
   const o = plain(raw);
   return (
     <div className="space-y-6">
-      <Link href="/account/orders" className="text-sm text-ink/55 hover:text-ink">← Mes commandes</Link>
+      <Link href="/account/orders" className="text-sm text-ink/60 hover:text-ink">← Mes commandes</Link>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div><h1 className="h-display text-3xl">{o.orderNumber}</h1><p className="text-sm text-ink/55">Passée le {formatDate(o.createdAt)}</p></div>
+        <div><h1 className="h-display text-3xl">{o.orderNumber}</h1><p className="text-sm text-ink/60">Passée le {formatDate(o.createdAt)}</p></div>
         <StatusBadge status={o.status} />
       </div>
       <div className="card divide-y divide-ink/10">
         {o.items.map((i, k) => (
           <div key={k} className="flex justify-between gap-3 p-4 text-sm">
-            <span>{i.quantity} × {i.name}{i.variant && <span className="text-ink/50"> ({i.variant})</span>}</span><span>{formatPrice(i.price * i.quantity)}</span>
+            <span>{i.quantity} × {i.name}{i.variant && <span className="text-ink/60"> ({i.variant})</span>}</span><span>{formatPrice(i.price * i.quantity)}</span>
           </div>
         ))}
         <div className="space-y-1 p-4 text-sm">
@@ -40,7 +40,7 @@ export default async function OrderDetail({ params }: { params: Promise<{ id: st
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="card p-5 text-sm"><p className="label">Livraison</p>{o.customer?.fullName}<br />{o.address?.line}<br />{o.address?.city} {o.address?.postalCode}<br />{o.customer?.phone}</div>
         <div className="card p-5 text-sm"><p className="label">Historique</p>
-          <ul className="space-y-1">{o.statusHistory.map((h, k) => <li key={k} className="flex justify-between"><span>{STATUS_LABEL[h.status ?? ""]}</span><span className="text-ink/50">{formatDate(h.at as unknown as string)}</span></li>)}</ul>
+          <ul className="space-y-1">{o.statusHistory.map((h, k) => <li key={k} className="flex justify-between"><span>{STATUS_LABEL[h.status ?? ""]}</span><span className="text-ink/60">{formatDate(h.at as unknown as string)}</span></li>)}</ul>
         </div>
       </div>
     </div>

@@ -5,7 +5,7 @@ import { ContactForm } from "@/components/shop/ContactForm";
 import { getShopSettings } from "@/lib/data";
 import { formatTunisianPhone } from "@/lib/phone";
 
-export const metadata: Metadata = { title: "Contact", description: "Une question sur une commande, un produit ou une livraison ? Voici comment nous joindre." };
+export const metadata: Metadata = { title: "Contact", description: "Une question sur une commande, un produit ou une livraison ? Contactez Accessoires Plus par téléphone, par e-mail ou avec notre formulaire : nous répondons dès que possible." };
 
 type Row = { icon: typeof Mail; label: string; value: string; note?: string; action?: { label: string; href: string } };
 
@@ -38,9 +38,9 @@ export default async function ContactPage() {
             <div key={label} className="card flex flex-wrap items-center gap-4 p-5">
               <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-brass/10 text-brass-dark"><Icon size={24} strokeWidth={1.6} /></span>
               <div className="min-w-[11rem] flex-1">
-                <p className="text-sm font-medium text-ink/55">{label}</p>
+                <p className="text-sm font-medium text-ink/60">{label}</p>
                 <p className="break-words text-lg font-semibold">{value}</p>
-                {note && <p className="text-sm text-ink/55">{note}</p>}
+                {note && <p className="text-sm text-ink/60">{note}</p>}
               </div>
               {action && <a href={action.href} className="rounded-full bg-brass/10 px-5 py-2.5 text-sm font-semibold text-brass-dark transition hover:bg-brass hover:text-white">{action.label}</a>}
             </div>
@@ -51,7 +51,7 @@ export default async function ContactPage() {
             <div className="min-w-[11rem] flex-1">
               <h2 className="text-lg font-semibold leading-snug">Une question sur une commande ?</h2>
               <p className="mt-1 text-sm text-ink/60">Le suivi vous donne son état immédiatement, avec votre numéro de commande et votre téléphone.</p>
-              <p className="mt-2 text-sm text-ink/55">Voir aussi : <Link href="/service-client/retours-echanges" className="underline underline-offset-4">Retours &amp; Échanges</Link> · <Link href="/service-client/faq" className="underline underline-offset-4">FAQ</Link></p>
+              <p className="mt-2 text-sm text-ink/60">Voir aussi : <Link href="/service-client/retours-echanges" className="underline underline-offset-4">Retours &amp; Échanges</Link> · <Link href="/service-client/faq" className="underline underline-offset-4">FAQ</Link></p>
             </div>
             <Link href="/service-client/suivi-commande" className="btn-brass !px-5 !py-2.5">Suivre ma commande <ArrowRight size={16} /></Link>
           </aside>

@@ -2,7 +2,7 @@ import { formatPrice } from "@/lib/utils";
 import type { Quote } from "@/lib/client/useQuote";
 
 export function Totals({ quote, loading }: { quote: Quote | null; loading?: boolean }) {
-  if (!quote) return <p className="text-sm text-ink/50">{loading ? "Calcul en cours…" : "—"}</p>;
+  if (!quote) return <p className="text-sm text-ink/60">{loading ? "Calcul en cours…" : "—"}</p>;
   return (
     <dl className={`space-y-2 text-sm transition ${loading ? "opacity-50" : ""}`}>
       <div className="flex justify-between"><dt className="text-ink/60">Sous-total</dt><dd>{formatPrice(quote.subtotal)}</dd></div>

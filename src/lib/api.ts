@@ -14,7 +14,7 @@ export function api<C = { params: Promise<Record<string, string>> }>(handler: Ha
       const out = await handler(req, ctx);
       // Toute mutation admin du catalogue invalide le cache des pages publiques.
       if (req.method !== "GET" && /\/api\/admin\/(products|categories|settings)/.test(new URL(req.url).pathname)) bustCatalog();
-      return out instanceof Response ? out : NextResponse.json(out);
+      return out instanceof Response ? out : NextResponse.json(out, { headers: { "Cache-Control": "private, no-cache" } });
     } catch (e) {
       if (e instanceof AppError) {
         return NextResponse.json({ error: e.message, code: e.code, details: e.details }, { status: e.status });

@@ -3,7 +3,7 @@ import { InfoPage } from "@/components/shop/InfoPage";
 
 export const metadata: Metadata = {
   title: "Retours & Échanges",
-  description: "Délai de rétractation de 7 jours, conditions de retour, remboursement et articles non repris.",
+  description: "Retours et échanges sous 7 jours à compter de la réception : conditions, marche à suivre, remboursement et articles non repris chez Accessoires Plus.",
 };
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {

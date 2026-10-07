@@ -14,11 +14,11 @@ export default async function OrdersPage() {
   return (
     <div>
       <h1 className="h-display mb-6 text-3xl">Mes commandes</h1>
-      {orders.length === 0 ? <p className="text-ink/55">Vous n’avez pas encore passé de commande.</p> : (
+      {orders.length === 0 ? <p className="text-ink/60">Vous n’avez pas encore passé de commande.</p> : (
         <ul className="card divide-y divide-ink/10">
           {orders.map((o) => (
             <li key={String(o._id)}><Link href={`/account/orders/${o._id}`} className="flex flex-wrap items-center justify-between gap-3 p-4 hover:bg-sand-50">
-              <div><p className="font-mono text-sm font-medium">{o.orderNumber}</p><p className="text-xs text-ink/50">{formatDate(o.createdAt)} · {o.items.length} article{o.items.length > 1 ? "s" : ""}</p></div>
+              <div><p className="font-mono text-sm font-medium">{o.orderNumber}</p><p className="text-xs text-ink/60">{formatDate(o.createdAt)} · {o.items.length} article{o.items.length > 1 ? "s" : ""}</p></div>
               <div className="flex items-center gap-4"><StatusBadge status={o.status} /><span className="text-sm font-semibold">{formatPrice(o.total)}</span></div>
             </Link></li>
           ))}

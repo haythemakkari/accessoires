@@ -1,10 +1,14 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, Gift, RotateCcw, ShieldCheck, Truck } from "lucide-react";
 import { getHomeData, getShopSettings } from "@/lib/data";
 import { ProductGrid } from "@/components/shop/ProductGrid";
 import { Reveal } from "@/components/ui/Reveal";
-import { ProductImage } from "@/components/ui/ProductImage";
+import { HeroMedia } from "@/components/shop/HeroMedia";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { SITE_DESCRIPTION, organizationJsonLd } from "@/lib/seo";
 import { env } from "@/lib/env";
+import { asset } from "@/lib/assets";
 
 function Section({ eyebrow, title, href, children }: { eyebrow: string; title: string; href?: string; children: React.ReactNode }) {
   return (
@@ -21,12 +25,20 @@ function Section({ eyebrow, title, href, children }: { eyebrow: string; title: s
   );
 }
 
+export const metadata: Metadata = {
+  title: { absolute: `${env.siteName} — Bijoux, montres, sacs & accessoires de mode | Tunisie` },
+  description: SITE_DESCRIPTION,
+  alternates: { canonical: "/" },
+};
+
+export const revalidate = 60; // page pré-générée, régénérée au plus toutes les 60 s
+
 export default async function HomePage() {
   const [home, settings] = await Promise.all([getHomeData(), getShopSettings()]);
-  const hero = home.featured[0] ?? home.latest[0];
 
   return (
     <>
+      <JsonLd data={organizationJsonLd(settings)} />
       {/* HERO */}
       <section className="relative overflow-hidden">
         <div className="container-x grid items-center gap-10 py-12 lg:grid-cols-2 lg:py-20">
@@ -45,14 +57,16 @@ export default async function HomePage() {
             <div className="relative mx-auto aspect-[4/5] w-full max-w-md">
               <div className="absolute -right-4 -top-4 h-full w-full rounded-[2rem] border border-brass/40" />
               <div className="relative h-full w-full overflow-hidden rounded-[2rem] bg-sand-100">
-                <ProductImage src={hero?.images[0]} alt={hero?.name ?? env.siteName} priority />
+                {(settings.heroMediaType === "image" && settings.heroImages.length > 0) || (settings.heroMediaType === "video" && settings.heroMediaUrl) ? (
+                  <HeroMedia type={settings.heroMediaType as "image" | "video"} images={settings.heroImages} url={settings.heroMediaUrl} poster={settings.heroPosterUrl || undefined} alt={settings.heroAlt || env.siteName} />
+                ) : (
+                  // Aucun média choisi par l'admin : visuel de marque (jamais une photo de produit)
+                  <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-sand-100 to-sand-200 p-10">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={asset("/logo.webp")} alt={env.siteName} width={640} height={93} className="w-full max-w-[18rem]" />
+                  </div>
+                )}
               </div>
-              {hero && (
-                <Link href={`/products/${hero.slug}`} className="absolute -bottom-4 -left-4 rounded-2xl bg-white px-5 py-3 shadow-xl transition hover:-translate-y-1">
-                  <p className="text-[11px] uppercase tracking-widest text-ink/45">À la une</p>
-                  <p className="text-sm font-medium">{hero.name}</p>
-                </Link>
-              )}
             </div>
           </Reveal>
         </div>
@@ -85,7 +99,6 @@ export default async function HomePage() {
       )}
 
       {home.sale.length > 0 && <Section eyebrow="Offres" title="En promotion" href="/promotions"><ProductGrid products={home.sale} /></Section>}
-      {home.best.length > 0 && <Section eyebrow="Plébiscités" title="Meilleures ventes" href="/products?sort=popular"><ProductGrid products={home.best.slice(0, 4)} /></Section>}
 
       {/* AVANTAGES */}
       <section className="container-x mt-20 sm:mt-28">

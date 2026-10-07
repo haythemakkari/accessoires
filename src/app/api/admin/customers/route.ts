@@ -27,12 +27,13 @@ export const GET = api(async (req) => {
     ]);
     const agg = await Order.aggregate([
       { $match: { user: { $in: users.map((u) => u._id) } } },
-      { $group: { _id: "$user", orders: { $sum: 1 }, spent: { $sum: { $cond: [{ $ne: ["$status", "cancelled"] }, "$total", 0] } }, lastOrder: { $max: "$createdAt" } } },
+      { $group: { _id: "$user", orders: { $sum: 1 }, spent: { $sum: { $cond: [{ $ne: ["$status", "cancelled"] }, "$total", 0] } }, lastOrder: { $max: "$createdAt" }, cancelled: { $sum: { $cond: [{ $eq: ["$status", "cancelled"] }, 1, 0] } } } },
     ]);
     const m = new Map(agg.map((a) => [String(a._id), a]));
     const items = users.map((u) => ({
       id: String(u._id), name: u.name, email: u.email, phone: u.phone ?? "", createdAt: u.createdAt, isActive: u.isActive,
       orders: m.get(String(u._id))?.orders ?? 0, spent: m.get(String(u._id))?.spent ?? 0, lastOrder: m.get(String(u._id))?.lastOrder ?? null,
+      cancelled: m.get(String(u._id))?.cancelled ?? 0,
     }));
     return { items, total, page: q.page, pages: Math.max(1, Math.ceil(total / q.limit)) };
   }
@@ -44,7 +45,7 @@ export const GET = api(async (req) => {
       { $match: match },
       { $sort: { createdAt: -1 } },
       { $group: { _id: "$customer.phone", name: { $first: "$customer.fullName" }, email: { $first: "$customer.email" }, orders: { $sum: 1 },
-          spent: { $sum: { $cond: [{ $ne: ["$status", "cancelled"] }, "$total", 0] } }, lastOrder: { $max: "$createdAt" }, createdAt: { $min: "$createdAt" } } },
+          spent: { $sum: { $cond: [{ $ne: ["$status", "cancelled"] }, "$total", 0] } }, lastOrder: { $max: "$createdAt" }, createdAt: { $min: "$createdAt" }, cancelled: { $sum: { $cond: [{ $eq: ["$status", "cancelled"] }, 1, 0] } } } },
       { $sort: { lastOrder: -1 } }, { $skip: skip }, { $limit: q.limit },
     ]),
     Order.aggregate([{ $match: match }, { $group: { _id: "$customer.phone" } }, { $count: "n" }]),
@@ -52,7 +53,7 @@ export const GET = api(async (req) => {
   void valid;
   const total = count[0]?.n ?? 0;
   return {
-    items: rows.map((r) => ({ id: r._id, name: r.name, email: r.email ?? "", phone: r._id, createdAt: r.createdAt, orders: r.orders, spent: r.spent, lastOrder: r.lastOrder })),
+    items: rows.map((r) => ({ id: r._id, name: r.name, email: r.email ?? "", phone: r._id, createdAt: r.createdAt, orders: r.orders, spent: r.spent, lastOrder: r.lastOrder, cancelled: r.cancelled })),
     total, page: q.page, pages: Math.max(1, Math.ceil(total / q.limit)),
   };
 });

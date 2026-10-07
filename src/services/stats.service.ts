@@ -3,6 +3,16 @@ import { Product } from "@/models/Product";
 import { User } from "@/models/User";
 import { Coupon } from "@/models/Coupon";
 
+/** Produits actifs dont le stock est strictement inférieur au seuil, du plus urgent (rupture) au moins urgent. */
+export async function lowStockProducts(threshold: number, limit = 50) {
+  const filter = { isActive: true, stock: { $lt: threshold } };
+  const [items, total] = await Promise.all([
+    Product.find(filter).sort({ stock: 1, name: 1 }).limit(limit).select("name sku stock images").lean(),
+    Product.countDocuments(filter),
+  ]);
+  return { total, items: items.map((p) => ({ id: String(p._id), name: p.name, sku: p.sku, stock: p.stock, image: p.images?.[0] ?? null })) };
+}
+
 export async function dashboardStats() {
   const since = new Date(Date.now() - 30 * 86400000);
   const sinceYear = new Date(Date.now() - 365 * 86400000);

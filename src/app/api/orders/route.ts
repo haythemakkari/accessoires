@@ -7,6 +7,7 @@ import { plain } from "@/lib/utils";
 import { Order } from "@/models/Order";
 import { checkoutSchema } from "@/validation/schemas";
 import { createOrder } from "@/services/order.service";
+import { clearStoredCart } from "@/services/cart.service";
 
 export const POST = api(async (req) => {
   assertSameOrigin(req);
@@ -15,6 +16,7 @@ export const POST = api(async (req) => {
   const user = await getCurrentUser(); // optionnel : commande invité autorisée
   if (user?.role === "admin") throw forbidden("Un compte administrateur ne peut pas passer de commande");
   const order = await createOrder(data, user ? user.id : null);
+  if (user) await clearStoredCart(user.id); // la commande est passée : le panier du compte est vidé
   return NextResponse.json({ orderNumber: order.orderNumber, id: order.id, total: order.total, isGuest: order.isGuest }, { status: 201 });
 });
 

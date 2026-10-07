@@ -8,6 +8,7 @@ import { effectivePrice, round2 } from "@/lib/utils";
 import { assertCouponUsable, redeemCoupon, releaseCoupon } from "./coupon.service";
 import { computeDiscount, computeTotals } from "./pricing";
 import { getSettings } from "./settings.service";
+import { imageForVariantString } from "@/lib/variants";
 
 export type CartInput = { productId: string; quantity: number; variant?: string }[];
 
@@ -116,7 +117,7 @@ export async function createOrder(input: CheckoutInput, userId: string | null) {
         product: l.product._id,
         name: l.product.name,
         sku: l.product.sku,
-        image: l.product.images[0],
+        image: imageForVariantString(l.product.variants, l.variant) ?? l.product.images[0], // photo de la couleur commandée
         price: l.price,
         quantity: l.quantity,
         variant: l.variant,

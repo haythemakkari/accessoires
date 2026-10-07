@@ -16,3 +16,8 @@ export const env = {
   siteName: process.env.NEXT_PUBLIC_SITE_NAME ?? "Accessoires Plus",
   currency: process.env.NEXT_PUBLIC_CURRENCY ?? "DT",
 };
+
+// Garde-fou : en production, une URL de site restée sur localhost fausserait canoniques, sitemap et données structurées.
+if (process.env.NODE_ENV === "production" && /localhost|127\.0\.0\.1/.test(env.siteUrl) && process.env.NEXT_PHASE !== "phase-production-build") {
+  console.warn("[SEO] NEXT_PUBLIC_SITE_URL pointe vers", env.siteUrl, "— définissez l'URL publique du site (https://…) pour des canoniques et un sitemap corrects.");
+}

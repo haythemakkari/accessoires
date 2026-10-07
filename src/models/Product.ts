@@ -2,8 +2,11 @@ import mongoose, { Schema, type InferSchemaType, type HydratedDocument } from "m
 
 export const GENDERS = ["homme", "femme", "unisex"] as const;
 
+/** Image associée à UNE option d'une variante (ex. option « Noir » → photo du produit en noir). */
+const optionImageSchema = new Schema({ option: { type: String, required: true, trim: true }, image: { type: String, required: true, trim: true } }, { _id: false });
+
 const variantSchema = new Schema(
-  { name: { type: String, required: true, trim: true }, options: [{ type: String, trim: true }] },
+  { name: { type: String, required: true, trim: true }, options: [{ type: String, trim: true }], optionImages: { type: [optionImageSchema], default: [] } },
   { _id: false },
 );
 
@@ -38,6 +41,7 @@ productSchema.index({ isActive: 1, gender: 1, price: 1 });
 productSchema.index({ isActive: 1, isFeatured: 1 });
 productSchema.index({ isActive: 1, isOnSale: 1 });
 productSchema.index({ isActive: 1, soldCount: -1 });
+productSchema.index({ isActive: 1, stock: 1 }); // alertes de stock bas
 
 productSchema.virtual("currentPrice").get(function () {
   return this.isOnSale && this.salePrice != null && this.salePrice < this.price ? this.salePrice : this.price;

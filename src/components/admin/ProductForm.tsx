@@ -6,11 +6,14 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { ApiError, fetcher } from "@/lib/client/fetcher";
 import type { CategoryDTO, ProductDTO } from "@/lib/data";
+import { mediaUrl } from "@/lib/media";
 import { PageHeader, Switch } from "./ui";
+import { VariantEditor, toVariantPayload, toVariantState, type VariantState } from "./VariantEditor";
+import { STOCK_CHANGED_EVENT } from "./NotificationBell";
 
 type FormState = {
   name: string; description: string; price: string; compareAtPrice: string; salePrice: string; isOnSale: boolean; category: string;
-  gender: "homme" | "femme" | "unisex"; images: string[]; stock: string; sku: string; variants: { name: string; options: string }[]; isActive: boolean; isFeatured: boolean;
+  gender: "homme" | "femme" | "unisex"; images: string[]; stock: string; sku: string; variants: VariantState[]; isActive: boolean; isFeatured: boolean;
 };
 
 const blank: FormState = { name: "", description: "", price: "", compareAtPrice: "", salePrice: "", isOnSale: false, category: "", gender: "unisex", images: [], stock: "0", sku: "", variants: [], isActive: true, isFeatured: false };
@@ -18,7 +21,7 @@ const blank: FormState = { name: "", description: "", price: "", compareAtPrice:
 const fromProduct = (p: ProductDTO): FormState => ({
   name: p.name, description: p.description, price: String(p.price), compareAtPrice: p.compareAtPrice != null ? String(p.compareAtPrice) : "", salePrice: p.salePrice != null ? String(p.salePrice) : "",
   isOnSale: p.isOnSale, category: p.category?._id ?? String(p.category ?? ""), gender: p.gender, images: p.images, stock: String(p.stock), sku: p.sku,
-  variants: p.variants.map((v) => ({ name: v.name, options: v.options.join(", ") })), isActive: p.isActive, isFeatured: p.isFeatured,
+  variants: toVariantState(p.variants), isActive: p.isActive, isFeatured: p.isFeatured,
 });
 
 export function ProductForm({ product }: { product?: ProductDTO }) {
@@ -55,11 +58,12 @@ export function ProductForm({ product }: { product?: ProductDTO }) {
     const body = {
       name: f.name, description: f.description, price: num(f.price) ?? 0, compareAtPrice: num(f.compareAtPrice), salePrice: num(f.salePrice), isOnSale: f.isOnSale,
       category: f.category, gender: f.gender, images: f.images, stock: Math.floor(num(f.stock) ?? 0), sku: f.sku, isActive: f.isActive, isFeatured: f.isFeatured,
-      variants: f.variants.filter((v) => v.name.trim()).map((v) => ({ name: v.name, options: v.options.split(",").map((o) => o.trim()).filter(Boolean) })),
+      variants: toVariantPayload(f.variants),
     };
     try {
       await fetcher(product ? `/api/admin/products/${product._id}` : "/api/admin/products", { method: product ? "PUT" : "POST", body });
       toast.success(product ? "Produit mis à jour" : "Produit créé");
+      window.dispatchEvent(new Event(STOCK_CHANGED_EVENT));
       router.push("/admin/products");
       router.refresh();
     } catch (err) {
@@ -90,7 +94,7 @@ export function ProductForm({ product }: { product?: ProductDTO }) {
               {f.images.map((src, i) => (
                 <div key={src + i} className="group relative aspect-square overflow-hidden rounded-lg border border-slate-200 bg-slate-100">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={src} alt="" className="h-full w-full object-cover" />
+                  <img src={mediaUrl(src, 320)} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
                   {i === 0 && <span className="absolute left-1 top-1 rounded bg-indigo-600 px-1.5 py-0.5 text-[10px] text-white">Principale</span>}
                   <div className="absolute inset-x-0 bottom-0 flex justify-between bg-black/60 p-1 opacity-0 transition group-hover:opacity-100">
                     <button type="button" onClick={() => move(i, -1)} className="p-1 text-white" aria-label="Avancer"><ArrowLeft size={14} /></button>
@@ -111,17 +115,8 @@ export function ProductForm({ product }: { product?: ProductDTO }) {
             </div>
             {err("images")}
           </section>
-          <section className="a-card space-y-3 p-4">
-            <div className="flex items-center justify-between"><p className="text-sm font-medium">Variantes <span className="font-normal text-slate-400">· stock partagé</span></p>
-              <button type="button" className="a-btn-ghost" onClick={() => set("variants", [...f.variants, { name: "", options: "" }])}><Plus size={14} /> Ajouter</button></div>
-            {f.variants.map((v, i) => (
-              <div key={i} className="grid grid-cols-[1fr_2fr_auto] gap-2">
-                <input className="a-input" placeholder="Ex. Couleur" value={v.name} onChange={(e) => set("variants", f.variants.map((x, k) => (k === i ? { ...x, name: e.target.value } : x)))} />
-                <input className="a-input" placeholder="Noir, Marron, Cognac" value={v.options} onChange={(e) => set("variants", f.variants.map((x, k) => (k === i ? { ...x, options: e.target.value } : x)))} />
-                <button type="button" className="a-btn-ghost text-rose-600" onClick={() => set("variants", f.variants.filter((_, k) => k !== i))} aria-label="Retirer"><Trash2 size={15} /></button>
-              </div>
-            ))}
-          </section>
+          <VariantEditor value={f.variants} onChange={(v) => set("variants", v)} productImages={f.images} />
+          {err("variants")}
         </div>
         <div className="space-y-4">
           <section className="a-card space-y-4 p-4">

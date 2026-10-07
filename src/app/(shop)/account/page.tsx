@@ -37,11 +37,11 @@ export default async function AccountDashboard() {
       </div>
       <section>
         <div className="mb-3 flex items-center justify-between"><h2 className="h-display text-xl">Dernières commandes</h2><Link href="/account/orders" className="text-sm underline underline-offset-4">Tout voir</Link></div>
-        {recent.length === 0 ? <p className="text-sm text-ink/55">Aucune commande pour le moment.</p> : (
+        {recent.length === 0 ? <p className="text-sm text-ink/60">Aucune commande pour le moment.</p> : (
           <ul className="card divide-y divide-ink/10">
             {recent.map((o) => (
               <li key={o._id as unknown as string}><Link href={`/account/orders/${o._id}`} className="flex items-center justify-between gap-3 p-4 hover:bg-sand-50">
-                <div><p className="font-mono text-sm font-medium">{o.orderNumber}</p><p className="text-xs text-ink/50">{formatDate(o.createdAt)}</p></div>
+                <div><p className="font-mono text-sm font-medium">{o.orderNumber}</p><p className="text-xs text-ink/60">{formatDate(o.createdAt)}</p></div>
                 <div className="flex items-center gap-4"><StatusBadge status={o.status} /><span className="text-sm font-semibold">{formatPrice(o.total)}</span></div>
               </Link></li>
             ))}

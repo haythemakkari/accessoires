@@ -14,9 +14,17 @@ export type CartLine = {
   stock: number;
 };
 
+/** Un panier non modifié depuis plus de 30 jours est considéré comme abandonné et vidé à la réouverture. */
+export const CART_MAX_AGE_MS = 30 * 24 * 3600 * 1000;
+export const CART_STORAGE_KEY = "accessoires-plus-cart";
+
 type CartState = {
   lines: CartLine[];
   couponCode: string | null;
+  /** Date de la dernière modification (ms) : sert à l'expiration. */
+  updatedAt: number;
+  /** Remplace tout le panier (mise à jour depuis le catalogue ou depuis le compte). */
+  setLines: (lines: CartLine[], couponCode?: string | null) => void;
   add: (line: Omit<CartLine, "key" | "quantity">, qty?: number) => void;
   setQty: (key: string, qty: number) => void;
   remove: (key: string) => void;
@@ -31,22 +39,24 @@ export const useCart = create<CartState>()(
     (set) => ({
       lines: [],
       couponCode: null,
+      updatedAt: 0,
+      setLines: (lines, couponCode) => set((s) => ({ lines, couponCode: couponCode === undefined ? s.couponCode : couponCode, updatedAt: Date.now() })),
       add: (line, qty = 1) =>
         set((s) => {
           const key = lineKey(line.productId, line.variant);
           const existing = s.lines.find((l) => l.key === key);
           if (existing) {
-            return { lines: s.lines.map((l) => (l.key === key ? { ...l, ...line, quantity: Math.min(l.quantity + qty, line.stock) } : l)) };
+            return { updatedAt: Date.now(), lines: s.lines.map((l) => (l.key === key ? { ...l, ...line, quantity: Math.min(l.quantity + qty, line.stock) } : l)) };
           }
-          return { lines: [...s.lines, { ...line, key, quantity: Math.min(qty, line.stock) }] };
+          return { updatedAt: Date.now(), lines: [...s.lines, { ...line, key, quantity: Math.min(qty, line.stock) }] };
         }),
       setQty: (key, qty) =>
-        set((s) => ({ lines: s.lines.map((l) => (l.key === key ? { ...l, quantity: Math.max(1, Math.min(qty, l.stock)) } : l)) })),
-      remove: (key) => set((s) => ({ lines: s.lines.filter((l) => l.key !== key) })),
-      clear: () => set({ lines: [], couponCode: null }),
-      setCoupon: (couponCode) => set({ couponCode }),
+        set((s) => ({ updatedAt: Date.now(), lines: s.lines.map((l) => (l.key === key ? { ...l, quantity: Math.max(1, Math.min(qty, l.stock)) } : l)) })),
+      remove: (key) => set((s) => ({ updatedAt: Date.now(), lines: s.lines.filter((l) => l.key !== key) })),
+      clear: () => set({ lines: [], couponCode: null, updatedAt: 0 }),
+      setCoupon: (couponCode) => set({ couponCode, updatedAt: Date.now() }),
     }),
-    { name: "accessoires-plus-cart", version: 1, skipHydration: true },
+    { name: CART_STORAGE_KEY, version: 2, skipHydration: true, partialize: (s) => ({ lines: s.lines, couponCode: s.couponCode, updatedAt: s.updatedAt }) as CartState, migrate: (old) => ({ ...(old as object), updatedAt: Date.now() }) as CartState },
   ),
 );
 

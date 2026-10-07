@@ -184,3 +184,41 @@ describe("réduction de bienvenue paramétrable", () => {
     expect(await Coupon.countDocuments({ kind: "welcome" })).toBe(0);
   });
 });
+
+describe("alertes de stock bas", () => {
+  it("liste les produits actifs sous le seuil (du plus urgent au moins urgent), ignore les inactifs", async () => {
+    const { lowStockProducts } = await import("@/services/stats.service");
+    const mk = async (name: string, stock: number, isActive = true) => {
+      const cat = (await Category.findOne()) ?? (await Category.create({ name: "Test", slug: "test" }));
+      return Product.create({ name, slug: `s-${name}-${Math.random()}`, price: 10, category: cat._id, stock, sku: `SKU-${name}-${Math.random()}`, isActive });
+    };
+    await Promise.all([mk("A-zero", 0), mk("B-trois", 3), mk("C-quatre", 4), mk("D-cinq", 5), mk("E-six", 6), mk("F-inactif", 1, false)]);
+    const r = await lowStockProducts(5);
+    expect(r.total).toBe(3);
+    expect(r.items.map((p) => p.name)).toEqual(["A-zero", "B-trois", "C-quatre"]);
+    expect((await lowStockProducts(6)).items.map((p) => p.name)).toContain("D-cinq"); // seuil changé : 5 devient « bas »
+    expect((await lowStockProducts(1)).total).toBe(1); // seuil 1 : seulement les ruptures
+  });
+  it("une commande qui fait passer le stock sous le seuil déclenche l'alerte", async () => {
+    const { lowStockProducts } = await import("@/services/stats.service");
+    await makeProduct(7);
+    expect((await lowStockProducts(5)).total).toBe(0);
+    await createOrder({ customer, address, items: [{ productId, quantity: 3 }] }, null); // reste 4
+    const r = await lowStockProducts(5);
+    expect(r.total).toBe(1);
+    expect(r.items[0].stock).toBe(4);
+  });
+});
+
+describe("image de la couleur commandée", () => {
+  it("la ligne de commande garde la photo de la couleur choisie (sinon l'image principale)", async () => {
+    await makeProduct(10, {
+      images: ["/uploads/principale.webp"],
+      variants: [{ name: "Couleur", options: ["Noir", "Marron"], optionImages: [{ option: "Noir", image: "/uploads/noir.webp" }] }],
+    });
+    const noir = await createOrder({ customer, address, items: [{ productId, quantity: 1, variant: "Noir" }] }, null);
+    expect(noir.items[0].image).toBe("/uploads/noir.webp");
+    const marron = await createOrder({ customer, address, items: [{ productId, quantity: 1, variant: "Marron" }] }, null);
+    expect(marron.items[0].image).toBe("/uploads/principale.webp"); // option sans image
+  });
+});

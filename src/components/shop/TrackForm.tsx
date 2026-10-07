@@ -38,10 +38,10 @@ function Progress({ status }: { status: string }) {
           return (
             <li key={s.key} className="relative flex flex-1 flex-col items-center text-center">
               {i > 0 && <span className={`absolute right-1/2 top-3.5 -z-0 h-0.5 w-full ${i <= current ? "bg-brass" : "bg-ink/15"}`} />}
-              <span className={`relative z-10 flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold ${done ? "bg-brass text-white" : active ? "bg-ink text-sand-50 ring-4 ring-brass/30" : "bg-sand-200 text-ink/45"}`}>
+              <span className={`relative z-10 flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold ${done ? "bg-brass text-white" : active ? "bg-ink text-sand-50 ring-4 ring-brass/30" : "bg-sand-200 text-ink/60"}`}>
                 {done ? <Check size={14} /> : i + 1}
               </span>
-              <span className={`mt-2 text-[11px] leading-tight sm:text-xs ${i <= current ? "font-medium text-ink" : "text-ink/45"}`}>{s.label}</span>
+              <span className={`mt-2 text-xs leading-tight sm:text-xs ${i <= current ? "font-medium text-ink" : "text-ink/60"}`}>{s.label}</span>
             </li>
           );
         })}
@@ -77,9 +77,9 @@ export function TrackForm() {
         <div className="card space-y-4 p-6 text-sm">
           <div className="flex flex-wrap items-center justify-between gap-2"><p className="font-mono text-base font-semibold">{res.orderNumber}</p><StatusBadge status={res.status} /></div>
           <Progress status={res.status} />
-          <ul className="divide-y divide-ink/10">{res.items.map((i, k) => <li key={k} className="py-2">{i.quantity} × {i.name}{i.variant && <span className="text-ink/50"> ({i.variant})</span>}</li>)}</ul>
+          <ul className="divide-y divide-ink/10">{res.items.map((i, k) => <li key={k} className="py-2">{i.quantity} × {i.name}{i.variant && <span className="text-ink/60"> ({i.variant})</span>}</li>)}</ul>
           <p className="font-medium">Total : {formatPrice(res.total)}</p>
-          <div><p className="label">Historique</p><ul className="space-y-1">{res.history.map((h, k) => <li key={k} className="flex justify-between"><span>{STATUS_LABEL[h.status]}</span><span className="text-ink/50">{formatDate(h.at)}</span></li>)}</ul></div>
+          <div><p className="label">Historique</p><ul className="space-y-1">{res.history.map((h, k) => <li key={k} className="flex justify-between"><span>{STATUS_LABEL[h.status]}</span><span className="text-ink/60">{formatDate(h.at)}</span></li>)}</ul></div>
         </div>
       )}
     </div>

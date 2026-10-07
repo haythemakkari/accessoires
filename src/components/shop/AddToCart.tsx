@@ -5,13 +5,16 @@ import { Minus, Plus, ShoppingBag } from "lucide-react";
 import { toast } from "sonner";
 import { useCart } from "@/stores/cart";
 import { useUser } from "@/stores/user";
+import { useVariantChoice } from "./VariantContext";
+import { mediaUrl } from "@/lib/media";
+import { optionImage } from "@/lib/variants";
 import type { ProductDTO } from "@/lib/data";
 
 export function AddToCart({ product }: { product: ProductDTO }) {
   const add = useCart((s) => s.add);
   const isAdmin = useUser((s) => s.user?.role === "admin");
   const [qty, setQty] = useState(1);
-  const [choice, setChoice] = useState<Record<string, string>>({});
+  const { choice, select, selectedImage } = useVariantChoice();
   const out = product.stock <= 0;
   const missing = product.variants.find((v) => !choice[v.name]);
 
@@ -19,7 +22,8 @@ export function AddToCart({ product }: { product: ProductDTO }) {
     if (isAdmin) return toast.error("Un compte administrateur ne peut pas passer de commande");
     if (missing) return toast.error(`Choisissez : ${missing.name}`);
     const variant = product.variants.length ? product.variants.map((v) => choice[v.name]).join(" / ") : undefined;
-    add({ productId: product._id, slug: product.slug, name: product.name, image: product.images[0], price: product.currentPrice, variant, stock: product.stock }, qty);
+    // l'image du panier = photo de la couleur choisie (sinon image principale)
+    add({ productId: product._id, slug: product.slug, name: product.name, image: selectedImage ?? product.images[0], price: product.currentPrice, variant, stock: product.stock }, qty);
     toast.success("Ajouté au panier", { description: product.name, action: { label: "Voir", onClick: () => (window.location.href = "/cart") } });
   };
 
@@ -29,10 +33,17 @@ export function AddToCart({ product }: { product: ProductDTO }) {
         <div key={v.name}>
           <p className="label">{v.name}{choice[v.name] && <span className="ml-2 normal-case tracking-normal text-ink">· {choice[v.name]}</span>}</p>
           <div className="flex flex-wrap gap-2">
-            {v.options.map((o) => (
-              <button key={o} onClick={() => setChoice({ ...choice, [v.name]: o })}
-                className={`rounded-full border px-4 py-2 text-sm transition ${choice[v.name] === o ? "border-ink bg-ink text-sand-50" : "border-ink/20 hover:border-ink"}`}>{o}</button>
-            ))}
+            {v.options.map((o) => {
+              const img = optionImage(v, o);
+              const active = choice[v.name] === o;
+              return (
+                <button key={o} type="button" onClick={() => select(v.name, o)} aria-pressed={active}
+                  className={`flex items-center gap-2 rounded-full border py-1.5 text-sm transition ${img ? "pl-1.5 pr-4" : "px-4 py-2"} ${active ? "border-ink bg-ink text-sand-50" : "border-ink/20 hover:border-ink"}`}>
+                  {img && /* eslint-disable-next-line @next/next/no-img-element */ <img src={mediaUrl(img, 160)} alt="" width={28} height={28} loading="lazy" className="h-7 w-7 rounded-full object-cover" />}
+                  {o}
+                </button>
+              );
+            })}
           </div>
         </div>
       ))}
@@ -47,7 +58,7 @@ export function AddToCart({ product }: { product: ProductDTO }) {
         </div>
         <button onClick={onAdd} disabled={out} className="btn-primary flex-1"><ShoppingBag size={18} /> {out ? "Indisponible" : "Ajouter au panier"}</button>
       </div>
-      <Link href="/cart" className="block text-center text-sm text-ink/55 underline underline-offset-4 hover:text-ink">Voir mon panier</Link>
+      <Link href="/cart" className="block text-center text-sm text-ink/60 underline underline-offset-4 hover:text-ink">Voir mon panier</Link>
     </div>
   );
 }

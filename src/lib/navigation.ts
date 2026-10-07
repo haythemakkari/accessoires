@@ -33,3 +33,8 @@ export const SERVICE_LINKS = [
   { label: "Retours & Échanges", href: "/service-client/retours-echanges" },
   { label: "Suivi colis", href: "/service-client/suivi-commande" },
 ];
+
+/** Réseaux sociaux affichés dans le pied de page. */
+export const SOCIAL_LINKS = {
+  instagram: "https://www.instagram.com/accessoires.plus/",
+};

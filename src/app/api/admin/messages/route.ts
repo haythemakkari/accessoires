@@ -1,5 +1,7 @@
 import { z } from "zod";
-import { api, parseQuery } from "@/lib/api";
+import { api, assertSameOrigin, parseBody, parseQuery } from "@/lib/api";
+import { AppError } from "@/lib/errors";
+import { messageBulkSchema } from "@/validation/schemas";
 import { requireAdmin } from "@/lib/auth";
 import { plain } from "@/lib/utils";
 import { Message } from "@/models/Message";
@@ -16,4 +18,23 @@ export const GET = api(async (req) => {
     Message.countDocuments({ isRead: false }),
   ]);
   return { items: plain(items), total, unread, page: q.page, pages: Math.max(1, Math.ceil(total / q.limit)) };
+});
+
+/** Suppression groupée : { ids: [...] } (100 max). */
+export const DELETE = api(async (req) => {
+  assertSameOrigin(req);
+  await requireAdmin();
+  const { ids } = await parseBody(req, messageBulkSchema);
+  const res = await Message.deleteMany({ _id: { $in: [...new Set(ids)] } });
+  return { ok: true, deleted: res.deletedCount };
+});
+
+/** Marquage groupé lu / non lu : { ids: [...], isRead: boolean }. */
+export const PATCH = api(async (req) => {
+  assertSameOrigin(req);
+  await requireAdmin();
+  const { ids, isRead } = await parseBody(req, messageBulkSchema);
+  if (typeof isRead !== "boolean") throw new AppError("isRead booléen requis");
+  const res = await Message.updateMany({ _id: { $in: [...new Set(ids)] } }, { isRead });
+  return { ok: true, updated: res.modifiedCount };
 });

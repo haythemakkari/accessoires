@@ -2,8 +2,9 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
-import { LayoutDashboard, LogOut, Mail, Menu, Package, ShoppingCart, Settings, Tags, TicketPercent, Users, X } from "lucide-react";
+import { ImageIcon, LayoutDashboard, LogOut, Mail, Menu, Package, ShoppingCart, Settings, Tags, TicketPercent, Users, X } from "lucide-react";
 import { fetcher } from "@/lib/client/fetcher";
+import { NotificationBell } from "./NotificationBell";
 
 const NAV = [
   { href: "/admin", l: "Tableau de bord", i: LayoutDashboard },
@@ -13,6 +14,7 @@ const NAV = [
   { href: "/admin/customers", l: "Clients", i: Users },
   { href: "/admin/coupons", l: "Coupons", i: TicketPercent },
   { href: "/admin/messages", l: "Messages", i: Mail },
+  { href: "/admin/homepage", l: "Page d'accueil", i: ImageIcon },
   { href: "/admin/settings", l: "Paramètres", i: Settings },
 ];
 
@@ -50,7 +52,8 @@ export function AdminShell({ name, children }: { name: string; children: React.R
           <button className="lg:hidden" onClick={() => setOpen(!open)} aria-label="Menu">{open ? <X /> : <Menu />}</button>
           <span className="hidden text-sm text-slate-500 lg:block">Espace d’administration</span>
           <div className="flex items-center gap-3 text-sm">
-            <span className="text-slate-600">{name}</span>
+            <NotificationBell />
+            <span className="hidden text-slate-600 sm:inline">{name}</span>
             <button className="a-btn-ghost !px-2.5" onClick={async () => { await fetcher("/api/auth/logout", { method: "POST" }); router.push("/admin/login"); router.refresh(); }}><LogOut size={16} /> Quitter</button>
           </div>
         </header>

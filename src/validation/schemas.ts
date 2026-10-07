@@ -42,6 +42,10 @@ export const cartItemSchema = z.object({
   variant: z.string().trim().max(200).optional(),
 });
 
+/** Panier envoyé pour être mis à jour (public) ou enregistré sur le compte (connecté). */
+export const cartRefsSchema = z.object({ items: z.array(cartItemSchema).max(50) });
+export const cartPersistSchema = cartRefsSchema.extend({ couponCode: z.string().trim().max(40).nullish() });
+
 export const couponCheckSchema = z.object({
   code: z.string().trim().min(1, "Code requis").max(40),
   items: z.array(cartItemSchema).min(1).max(50),
@@ -79,7 +83,27 @@ export const productSchema = z
     /** Facultatif : généré automatiquement si vide. */
     sku: z.preprocess(emptyToUndefined, z.string().trim().max(60, "60 caractères maximum").optional()),
     variants: z
-      .array(z.object({ name: z.string().trim().min(1).max(40), options: z.array(z.string().trim().min(1).max(40)).min(1).max(30) }))
+      .array(
+        z
+          .object({
+            name: z.string().trim().min(1).max(40),
+            options: z.array(z.string().trim().min(1).max(40)).min(1).max(30),
+            // Une image par option (couleur…), facultative : fichiers téléversés ou liens http(s) uniquement
+            optionImages: z
+              .array(z.object({ option: z.string().trim().min(1).max(40), image: z.string().trim().max(500).regex(/^(\/uploads\/[\w.\-]+|https?:\/\/\S+)$/i, "Lien d'image invalide") }))
+              .max(30)
+              .default([]),
+          })
+          .superRefine((v, ctx) => {
+            const seen = new Set<string>();
+            v.optionImages.forEach((o, i) => {
+              if (!v.options.includes(o.option)) ctx.addIssue({ code: "custom", path: ["optionImages", i, "option"], message: `Option inconnue : « ${o.option} »` });
+              if (seen.has(o.option)) ctx.addIssue({ code: "custom", path: ["optionImages", i, "option"], message: `Plusieurs images pour « ${o.option} »` });
+              seen.add(o.option);
+            });
+            if (new Set(v.options).size !== v.options.length) ctx.addIssue({ code: "custom", path: ["options"], message: "Deux options portent le même nom" });
+          }),
+      )
       .max(5)
       .default([]),
     isActive: z.boolean().default(true),
@@ -126,6 +150,45 @@ export const settingsSchema = z.object({
 
 export const welcomeSettingsSchema = z.object({
   welcomeDiscountPercent: z.number().int("Nombre entier requis").min(0, "Minimum 0 (0 = offre désactivée)").max(50, "50 % maximum"),
+});
+
+export const stockSettingsSchema = z.object({
+  lowStockThreshold: z.number().int("Nombre entier requis").min(1, "Minimum 1").max(1000, "1000 maximum"),
+});
+
+const imageUrl = z.string().trim().max(500).regex(/^(\/uploads\/[\w.\-]+|https?:\/\/\S+)$/i, "Lien d'image invalide");
+/** Vidéo téléversée (servie par /media/video) ou lien https direct vers un fichier mp4/webm. */
+const videoUrl = z.string().trim().max(500).regex(/^(\/media\/video\/[\w\-]+\.(mp4|webm)|https:\/\/\S+\.(mp4|webm)(\?\S*)?)$/i, "Lien de vidéo invalide (mp4 ou webm)");
+export const HERO_MAX_IMAGES = 8;
+export const heroSettingsSchema = z
+  .object({
+    heroMediaType: z.enum(["none", "image", "video"]),
+    heroMediaUrl: z.string().trim().max(500).default(""),
+    heroPosterUrl: z.string().trim().max(500).default(""),
+    heroImages: z.array(z.string().trim().max(500)).max(HERO_MAX_IMAGES, `${HERO_MAX_IMAGES} photos maximum`).default([]),
+    heroAlt: z.string().trim().max(160, "160 caractères maximum").default(""),
+  })
+  .superRefine((h, ctx) => {
+    if (h.heroMediaType === "image") {
+      if (h.heroImages.length === 0) ctx.addIssue({ code: "custom", path: ["heroImages"], message: "Ajoutez au moins une photo" });
+      h.heroImages.forEach((u, i) => { if (!imageUrl.safeParse(u).success) ctx.addIssue({ code: "custom", path: ["heroImages", i], message: "Lien d'image invalide" }); });
+    }
+    if (h.heroMediaType === "video") {
+      const media = videoUrl.safeParse(h.heroMediaUrl);
+      if (!media.success) ctx.addIssue({ code: "custom", path: ["heroMediaUrl"], message: h.heroMediaUrl ? media.error.issues[0].message : "Ajoutez une vidéo" });
+      if (h.heroPosterUrl && !imageUrl.safeParse(h.heroPosterUrl).success) ctx.addIssue({ code: "custom", path: ["heroPosterUrl"], message: "Lien d'image invalide" });
+    }
+  })
+  // On ne garde que les champs utiles au type choisi.
+  .transform((h) =>
+    h.heroMediaType === "image" ? { ...h, heroMediaUrl: "", heroPosterUrl: "" }
+    : h.heroMediaType === "video" ? { ...h, heroImages: [] }
+    : { ...h, heroMediaUrl: "", heroPosterUrl: "", heroImages: [] },
+  );
+
+export const messageBulkSchema = z.object({
+  ids: z.array(z.string().regex(/^[a-f\d]{24}$/i, "Identifiant invalide")).min(1, "Aucun message sélectionné").max(100, "100 messages maximum à la fois"),
+  isRead: z.boolean().optional(), // PATCH : marquer lu / non lu
 });
 
 export const contactSettingsSchema = z.object({

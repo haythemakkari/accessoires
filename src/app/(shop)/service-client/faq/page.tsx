@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import { InfoPage } from "@/components/shop/InfoPage";
 import { getShopSettings } from "@/lib/data";
 import { formatPrice } from "@/lib/utils";
+import { JsonLd } from "@/components/seo/JsonLd";
 
-export const metadata: Metadata = { title: "FAQ", description: "Questions fréquentes : commande, paiement, livraison, code de bienvenue." };
+export const metadata: Metadata = { title: "FAQ", description: "Réponses à vos questions : commander sans compte, code de bienvenue, paiement à la livraison, frais de livraison, retours et suivi de colis chez Accessoires Plus." };
 
 export default async function FaqPage() {
   const s = await getShopSettings();
@@ -19,6 +20,7 @@ export default async function FaqPage() {
   ];
   return (
     <InfoPage title="Questions fréquentes">
+      <JsonLd data={{ "@type": "FAQPage", mainEntity: qa.map(([q, a]) => ({ "@type": "Question", name: q, acceptedAnswer: { "@type": "Answer", text: a } })) }} />
       {qa.map(([q, a]) => (
         <details key={q} className="card group p-5">
           <summary className="cursor-pointer list-none font-medium marker:hidden">{q}</summary>

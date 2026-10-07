@@ -6,7 +6,9 @@ import { toast } from "sonner";
 import { fetcher } from "@/lib/client/fetcher";
 import { formatPrice } from "@/lib/utils";
 import type { CategoryDTO, ProductDTO } from "@/lib/data";
+import { mediaUrl } from "@/lib/media";
 import { ConfirmDialog, PageHeader, Pager, Switch, useDebounced } from "./ui";
+import { STOCK_CHANGED_EVENT } from "./NotificationBell";
 
 type Res = { items: ProductDTO[]; total: number; page: number; pages: number };
 
@@ -35,7 +37,7 @@ export function ProductsTable() {
   useEffect(() => { fetcher<CategoryDTO[]>("/api/admin/categories").then(setCats).catch(() => {}); }, []);
 
   const patch = async (p: ProductDTO, body: object) => {
-    try { await fetcher(`/api/admin/products/${p._id}`, { method: "PATCH", body }); await load(); } catch (e) { toast.error((e as Error).message); }
+    try { await fetcher(`/api/admin/products/${p._id}`, { method: "PATCH", body }); await load(); window.dispatchEvent(new Event(STOCK_CHANGED_EVENT)); } catch (e) { toast.error((e as Error).message); }
   };
 
   return (
@@ -58,7 +60,7 @@ export function ProductsTable() {
                 <tr key={p._id} className="hover:bg-slate-50">
                   <td className="px-4 py-2.5">
                     <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-slate-100">{p.images[0] && /* eslint-disable-next-line @next/next/no-img-element */ <img src={p.images[0]} alt="" className="h-full w-full object-cover" />}</div>
+                      <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-slate-100">{p.images[0] && /* eslint-disable-next-line @next/next/no-img-element */ <img src={mediaUrl(p.images[0], 160)} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />}</div>
                       <div><p className="font-medium text-slate-900">{p.name}</p><p className="text-xs text-slate-400">{p.sku}</p></div>
                     </div>
                   </td>

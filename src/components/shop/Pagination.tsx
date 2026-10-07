@@ -13,7 +13,7 @@ export function Pagination({ page, pages, params }: { page: number; pages: numbe
       {page > 1 && <Link href={href(page - 1)} className="btn-outline !px-4 !py-2">Précédent</Link>}
       {nums.map((n, i) => (
         <span key={n} className="flex items-center gap-2">
-          {i > 0 && n - nums[i - 1] > 1 && <span className="text-ink/40">…</span>}
+          {i > 0 && n - nums[i - 1] > 1 && <span className="text-ink/60">…</span>}
           <Link href={href(n)} className={`flex h-10 w-10 items-center justify-center rounded-full text-sm ${n === page ? "bg-ink text-sand-50" : "hover:bg-sand-100"}`}>{n}</Link>
         </span>
       ))}

@@ -67,7 +67,7 @@ export function ContactForm() {
         {field("phone", "Téléphone", { type: "tel", inputMode: "tel", autoComplete: "tel", placeholder: "20 123 456" })}
         {field("email", "Email", { type: "email", autoComplete: "email" })}
       </div>
-      <p className="-mt-2 text-xs text-ink/50">Un téléphone ou un email suffit pour que nous puissions vous répondre.</p>
+      <p className="-mt-2 text-xs text-ink/60">Un téléphone ou un email suffit pour que nous puissions vous répondre.</p>
       <div className="grid gap-4 lg:grid-cols-2">
         {field("subject", "Objet")}
         {field("orderNumber", "N° de commande (optionnel)", { placeholder: "NM-261006-ABC123", className: "input uppercase" })}

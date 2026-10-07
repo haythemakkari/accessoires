@@ -7,7 +7,7 @@ export function Price({ price, salePrice, compareAt, onSale, size = "md" }: { pr
   return (
     <span className="inline-flex items-baseline gap-2">
       <span className={cn("font-semibold", size === "lg" ? "text-2xl" : "text-base", sale && "text-clay")}>{formatPrice(sale ? salePrice! : price)}</span>
-      {old && <span className={cn("text-ink/40 line-through", size === "lg" ? "text-base" : "text-sm")}>{formatPrice(old)}</span>}
+      {old && <span className={cn("text-ink/60 line-through", size === "lg" ? "text-base" : "text-sm")}>{formatPrice(old)}</span>}
     </span>
   );
 }

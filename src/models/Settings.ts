@@ -14,6 +14,15 @@ const settingsSchema = new Schema(
     contactHours: { type: String, trim: true, default: "" },
     /** Réduction du code de bienvenue, en % (0 = offre désactivée). Ne modifie pas les codes déjà émis. */
     welcomeDiscountPercent: { type: Number, min: 0, max: 50, default: 10 },
+    /** Alerte « stock bas » : produits actifs dont le stock est strictement inférieur à ce seuil. */
+    lowStockThreshold: { type: Number, min: 1, max: 1000, default: 10 },
+    /** Média principal de la page d'accueil (choisi par l'admin) : image ou courte vidéo. */
+    heroMediaType: { type: String, enum: ["none", "image", "video"], default: "none" },
+    heroMediaUrl: { type: String, trim: true, default: "" },
+    heroPosterUrl: { type: String, trim: true, default: "" },
+    /** Photos du diaporama (type « image ») : 1 à 8, affichées dans l'ordre, une nouvelle toutes les 2 s. */
+    heroImages: { type: [String], default: [] },
+    heroAlt: { type: String, trim: true, default: "" },
     contactEmailNote: { type: String, trim: true, default: "" },
     contactAddressNote: { type: String, trim: true, default: "" },
   },
@@ -21,6 +30,7 @@ const settingsSchema = new Schema(
 );
 
 export type SettingsData = Pick<InferSchemaType<typeof settingsSchema>, "shippingFee" | "freeShippingThreshold">;
+export type HeroMedia = { heroMediaType: "none" | "image" | "video"; heroMediaUrl: string; heroPosterUrl: string; heroImages: string[]; heroAlt: string };
 export type ContactInfo = { contactEmail: string; contactPhone: string; contactAddress: string; contactHours: string; contactEmailNote: string; contactAddressNote: string };
-export type ShopSettings = SettingsData & ContactInfo & { welcomeDiscountPercent: number };
+export type ShopSettings = SettingsData & ContactInfo & { welcomeDiscountPercent: number; lowStockThreshold: number } & HeroMedia;
 export const Settings = (mongoose.models.Settings as mongoose.Model<InferSchemaType<typeof settingsSchema>>) || mongoose.model("Settings", settingsSchema);

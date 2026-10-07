@@ -3,7 +3,7 @@ import { InfoPage } from "@/components/shop/InfoPage";
 import { getShopSettings } from "@/lib/data";
 import { formatPrice } from "@/lib/utils";
 
-export const metadata: Metadata = { title: "Livraison", description: "Frais, conditions de livraison et paiement à la réception." };
+export const metadata: Metadata = { title: "Livraison", description: "Frais de livraison, seuil de livraison offerte et paiement en espèces à la réception : tout savoir sur la livraison de vos accessoires partout en Tunisie." };
 
 export default async function LivraisonPage() {
   const s = await getShopSettings();

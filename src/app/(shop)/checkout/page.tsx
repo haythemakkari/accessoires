@@ -98,8 +98,8 @@ export default function CheckoutPage() {
       <ol className="mt-6 flex items-center gap-3 text-sm">
         {STEPS.map((s, i) => (
           <li key={s} className="flex items-center gap-3">
-            <span className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold ${i < step ? "bg-brass text-white" : i === step ? "bg-ink text-sand-50" : "bg-sand-200 text-ink/50"}`}>{i < step ? <Check size={14} /> : i + 1}</span>
-            <span className={`hidden sm:inline ${i === step ? "font-medium" : "text-ink/50"}`}>{s}</span>
+            <span className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold ${i < step ? "bg-brass text-white" : i === step ? "bg-ink text-sand-50" : "bg-sand-200 text-ink/60"}`}>{i < step ? <Check size={14} /> : i + 1}</span>
+            <span className={`hidden sm:inline ${i === step ? "font-medium" : "text-ink/60"}`}>{s}</span>
             {i < STEPS.length - 1 && <span className="h-px w-8 bg-ink/15" />}
           </li>
         ))}
@@ -142,7 +142,7 @@ export default function CheckoutPage() {
               <h2 className="h-display text-2xl">Récapitulatif</h2>
               <ul className="divide-y divide-ink/10 text-sm">
                 {lines.map((l) => (
-                  <li key={l.key} className="flex justify-between py-3"><span>{l.quantity} × {l.name}{l.variant && <span className="text-ink/50"> ({l.variant})</span>}</span><span>{formatPrice(l.price * l.quantity)}</span></li>
+                  <li key={l.key} className="flex justify-between py-3"><span>{l.quantity} × {l.name}{l.variant && <span className="text-ink/60"> ({l.variant})</span>}</span><span>{formatPrice(l.price * l.quantity)}</span></li>
                 ))}
               </ul>
               <div className="grid gap-4 rounded-xl bg-sand-100 p-4 text-sm sm:grid-cols-2">
@@ -151,7 +151,7 @@ export default function CheckoutPage() {
               </div>
               <div><p className="label">Code promotionnel</p><CouponBox /></div>
               {error && <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p>}
-              <p className="text-sm text-ink/55">Paiement en espèces à la livraison.</p>
+              <p className="text-sm text-ink/60">Paiement en espèces à la livraison.</p>
             </div>
           )}
           <div className="mt-8 flex justify-between gap-3">

@@ -14,8 +14,8 @@ export function AuthForm({ mode, welcomeDiscount }: { mode: "login" | "register"
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [v, setV] = useState({ name: "", email: "", phone: "", password: "" });
   const register = mode === "register";
-  const rawNext = sp.get("next") ?? "/account";
-  const next = rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : "/account"; // anti open-redirect
+  const rawNext = sp.get("next") ?? "/";
+  const next = rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : "/"; // anti open-redirect
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,7 +55,7 @@ export function AuthForm({ mode, welcomeDiscount }: { mode: "login" | "register"
         {input("email", "Email", { type: "email", required: true, autoComplete: "email" })}
         {register && input("phone", "Téléphone (optionnel)", { type: "tel", autoComplete: "tel", inputMode: "tel", placeholder: "20 123 456" })}
         {input("password", "Mot de passe", { type: "password", required: true, minLength: register ? 8 : 1, autoComplete: register ? "new-password" : "current-password" })}
-        {register && <p className="-mt-3 text-xs text-ink/50">8 caractères minimum, avec au moins une lettre et un chiffre.</p>}
+        {register && <p className="-mt-3 text-xs text-ink/60">8 caractères minimum, avec au moins une lettre et un chiffre.</p>}
         <button disabled={busy} className="btn-primary w-full">{busy ? "…" : register ? "Créer mon compte" : "Se connecter"}</button>
         <p className="text-center text-sm text-ink/60">
           {register ? <>Déjà client ? <Link href="/login" className="font-medium underline">Se connecter</Link></> : <>Nouveau ici ? <Link href="/register" className="font-medium underline">Créer un compte</Link></>}

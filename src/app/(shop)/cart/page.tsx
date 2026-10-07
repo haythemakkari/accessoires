@@ -30,19 +30,19 @@ export default function CartPage() {
     <div className="container-x py-10">
       <div className="mb-8 flex items-end justify-between">
         <h1 className="h-display text-4xl">Panier</h1>
-        <button onClick={clear} className="text-sm text-ink/55 underline underline-offset-4 hover:text-clay">Vider le panier</button>
+        <button onClick={clear} className="text-sm text-ink/60 underline underline-offset-4 hover:text-clay">Vider le panier</button>
       </div>
       <div className="grid gap-10 lg:grid-cols-[1fr_380px]">
         <ul className="divide-y divide-ink/10">
           {lines.map((l) => (
             <li key={l.key} className="flex gap-4 py-5">
-              <Link href={`/products/${l.slug}`} className="h-28 w-24 shrink-0 overflow-hidden rounded-xl bg-sand-100"><ProductImage src={l.image} alt={l.name} /></Link>
+              <Link href={`/products/${l.slug}`} className="h-28 w-24 shrink-0 overflow-hidden rounded-xl bg-sand-100"><ProductImage src={l.image} alt={l.name} sizes="96px" /></Link>
               <div className="flex flex-1 flex-col">
                 <div className="flex justify-between gap-3">
                   <div>
                     <Link href={`/products/${l.slug}`} className="font-medium hover:text-brass-dark">{l.name}</Link>
-                    {l.variant && <p className="text-sm text-ink/55">{l.variant}</p>}
-                    <p className="mt-1 text-sm text-ink/55">{formatPrice(l.price)} / unité</p>
+                    {l.variant && <p className="text-sm text-ink/60">{l.variant}</p>}
+                    <p className="mt-1 text-sm text-ink/60">{formatPrice(l.price)} / unité</p>
                   </div>
                   <p className="font-semibold">{formatPrice(l.price * l.quantity)}</p>
                 </div>
@@ -52,7 +52,7 @@ export default function CartPage() {
                     <span className="w-7 text-center text-sm tabular-nums">{l.quantity}</span>
                     <button className="p-2.5 disabled:opacity-30" disabled={l.quantity >= l.stock} onClick={() => setQty(l.key, l.quantity + 1)} aria-label="Augmenter"><Plus size={14} /></button>
                   </div>
-                  <button onClick={() => remove(l.key)} className="p-2 text-ink/45 hover:text-clay" aria-label="Supprimer"><Trash2 size={18} /></button>
+                  <button onClick={() => remove(l.key)} className="p-2 text-ink/60 hover:text-clay" aria-label="Supprimer"><Trash2 size={18} /></button>
                 </div>
               </div>
             </li>
@@ -64,7 +64,7 @@ export default function CartPage() {
           {error && <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p>}
           <Totals quote={quote} loading={loading} />
           <Link href="/checkout" aria-disabled={!!error} className={`btn-primary w-full ${error ? "pointer-events-none opacity-50" : ""}`}>Passer la commande</Link>
-          <p className="text-center text-xs text-ink/45">Commande possible sans compte · Paiement à la livraison</p>
+          <p className="text-center text-xs text-ink/60">Commande possible sans compte · Paiement à la livraison</p>
         </aside>
       </div>
     </div>

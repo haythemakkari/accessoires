@@ -1,8 +1,10 @@
 import { randomBytes } from "crypto";
 import { mkdir, writeFile } from "fs/promises";
 import path from "path";
+import sharp from "sharp";
 import { api, assertSameOrigin } from "@/lib/api";
 import { requireAdmin } from "@/lib/auth";
+import { warmVariants } from "@/lib/media-server";
 import { AppError } from "@/lib/errors";
 
 /** Détecte le vrai format via la signature des premiers octets (le type MIME envoyé par le client est falsifiable). */
@@ -28,10 +30,17 @@ export const POST = api(async (req) => {
   for (const f of files) {
     if (f.size > MAX) throw new AppError("Image trop lourde (5 Mo max)");
     const buf = Buffer.from(await f.arrayBuffer());
-    const ext = detectImageExt(buf);
-    if (!ext) throw new AppError("Format non supporté (jpg, png, webp, avif)");
-    const name = `${Date.now()}-${randomBytes(4).toString("hex")}.${ext}`;
-    await writeFile(path.join(dir, name), buf);
+    if (!detectImageExt(buf)) throw new AppError("Format non supporté (jpg, png, webp, avif)");
+    // On ne garde pas l'original brut : orientation corrigée, 2000 px max, WebP, métadonnées (GPS…) supprimées.
+    let optimized: Buffer;
+    try {
+      optimized = await sharp(buf).rotate().resize({ width: 2000, height: 2000, fit: "inside", withoutEnlargement: true }).webp({ quality: 82 }).toBuffer();
+    } catch {
+      throw new AppError("Image illisible ou corrompue");
+    }
+    const name = `${Date.now()}-${randomBytes(4).toString("hex")}.webp`;
+    await writeFile(path.join(dir, name), optimized);
+    warmVariants(name); // encode AVIF/WebP en arrière-plan : la 1ʳᵉ visite est déjà prête
     urls.push(`/uploads/${name}`);
   }
   return { urls };
