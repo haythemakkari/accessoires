@@ -1,32 +1,43 @@
 import { randomBytes } from "crypto";
-import { mkdir, writeFile } from "fs/promises";
-import path from "path";
+import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 import { api, assertSameOrigin } from "@/lib/api";
 import { requireAdmin } from "@/lib/auth";
 import { AppError } from "@/lib/errors";
+import { saveUpload, VIDEO_BLOB_PATH } from "@/lib/storage";
+import { MAX_VIDEO_BYTES, detectVideoExt } from "@/lib/video";
 
-const MAX = 25 * 1024 * 1024; // 25 Mo : une vidéo d'accueil courte (5–15 s) pèse typiquement 2 à 10 Mo
-const MP4_BRANDS = ["isom", "iso2", "iso4", "iso5", "iso6", "mp41", "mp42", "avc1", "dash", "M4V "];
-
-/** Détecte le format réel par signature (le type MIME envoyé par le navigateur est falsifiable). */
-function detectVideoExt(b: Buffer): "mp4" | "webm" | null {
-  if (b.length > 16 && b.toString("ascii", 4, 8) === "ftyp" && MP4_BRANDS.includes(b.toString("ascii", 8, 12))) return "mp4";
-  if (b.length > 16 && b[0] === 0x1a && b[1] === 0x45 && b[2] === 0xdf && b[3] === 0xa3) return "webm";
-  return null;
-}
-
+/**
+ * Deux modes :
+ *  - Vercel Blob : le navigateur envoie la vidéo DIRECTEMENT au stockage (Vercel refuse les requêtes de plus de 4,5 Mo) ;
+ *    cette route ne fait que délivrer l'autorisation (JSON). Le format réel est vérifié à l'enregistrement (api/admin/settings/hero).
+ *  - Disque local : envoi classique (multipart) vérifié ici.
+ */
 export const POST = api(async (req) => {
   assertSameOrigin(req);
+  if (req.headers.get("content-type")?.includes("application/json")) {
+    if (!process.env.BLOB_READ_WRITE_TOKEN) throw new AppError("Envoi de vidéo indisponible : ajoutez BLOB_READ_WRITE_TOKEN au projet Vercel (Storage → store Blob → connexion avec jeton lecture-écriture).", 400);
+    const body = (await req.json()) as HandleUploadBody;
+    return Response.json(
+      await handleUpload({
+        request: req,
+        body,
+        onBeforeGenerateToken: async (pathname) => {
+          await requireAdmin();
+          if (!VIDEO_BLOB_PATH.test(pathname)) throw new AppError("Nom de fichier invalide");
+          return { allowedContentTypes: ["video/mp4", "video/webm"], maximumSizeInBytes: MAX_VIDEO_BYTES, addRandomSuffix: false };
+        },
+      }),
+    );
+  }
+
   await requireAdmin();
   const file = (await req.formData()).get("file");
   if (!(file instanceof File)) throw new AppError("Fichier vidéo attendu");
-  if (file.size > MAX) throw new AppError(`Vidéo trop lourde (${Math.round(file.size / 1048576)} Mo) : 25 Mo maximum. Choisissez une vidéo plus courte ou compressée.`);
+  if (file.size > MAX_VIDEO_BYTES) throw new AppError(`Vidéo trop lourde (${Math.round(file.size / 1048576)} Mo) : 25 Mo maximum. Choisissez une vidéo plus courte ou compressée.`);
   const buf = Buffer.from(await file.arrayBuffer());
   const ext = detectVideoExt(buf);
   if (!ext) throw new AppError("Format non supporté : utilisez une vidéo MP4 (H.264) ou WebM.");
-  const dir = path.join(process.cwd(), "public", "uploads", "videos");
-  await mkdir(dir, { recursive: true });
   const name = `${Date.now()}-${randomBytes(4).toString("hex")}.${ext}`;
-  await writeFile(path.join(dir, name), buf);
+  await saveUpload(`videos/${name}`, buf, ext === "webm" ? "video/webm" : "video/mp4");
   return { url: `/media/video/${name}`, size: buf.length };
 });

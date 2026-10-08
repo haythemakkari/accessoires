@@ -3,6 +3,7 @@ import { useRef, useState } from "react";
 import { ImagePlus, Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { mediaUrl } from "@/lib/media";
+import { uploadImages } from "@/lib/client/upload";
 import type { VariantLike } from "@/lib/variants";
 
 export type OptionState = { label: string; image: string };
@@ -21,12 +22,7 @@ export const toVariantPayload = (variants: VariantState[]) =>
     });
 
 async function uploadImage(file: File): Promise<string> {
-  const fd = new FormData();
-  fd.append("files", file);
-  const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error ?? "Échec de l'envoi");
-  return data.urls[0];
+  return (await uploadImages([file]))[0];
 }
 
 /** Variantes du produit (couleur, taille…). Chaque option peut avoir SA photo : le client la voit dès qu'il choisit l'option. */

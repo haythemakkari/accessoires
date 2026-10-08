@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, ImageIcon, Plus, Trash2, Upload, Video, X } from "lucide-react";
 import { toast } from "sonner";
 import { ApiError, fetcher } from "@/lib/client/fetcher";
+import { uploadImages, uploadVideo } from "@/lib/client/upload";
 import { mediaUrl } from "@/lib/media";
 import { HeroMedia, SLIDE_INTERVAL_MS } from "@/components/shop/HeroMedia";
 import { PageHeader } from "./ui";
@@ -11,25 +12,10 @@ const MAX_IMAGES = 8;
 type State = { heroMediaType: "none" | "image" | "video"; heroMediaUrl: string; heroPosterUrl: string; heroImages: string[]; heroAlt: string };
 const EMPTY: State = { heroMediaType: "none", heroMediaUrl: "", heroPosterUrl: "", heroImages: [], heroAlt: "" };
 
-function uploadWithProgress(url: string, field: string, files: File[], onProgress: (pct: number) => void): Promise<{ urls?: string[]; url?: string }> {
-  return new Promise((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    xhr.open("POST", url);
-    xhr.upload.onprogress = (e) => e.lengthComputable && onProgress(Math.round((e.loaded / e.total) * 100));
-    xhr.onload = () => {
-      let body: { error?: string; urls?: string[]; url?: string } = {};
-      try { body = JSON.parse(xhr.responseText); } catch {}
-      xhr.status >= 200 && xhr.status < 300 ? resolve(body) : reject(new Error(body.error ?? "Échec de l'envoi"));
-    };
-    xhr.onerror = () => reject(new Error("Connexion interrompue pendant l'envoi"));
-    const fd = new FormData();
-    files.forEach((f) => fd.append(field, f));
-    xhr.send(fd);
-  });
-}
 const pick = (s: State): State => ({ heroMediaType: s.heroMediaType, heroMediaUrl: s.heroMediaUrl, heroPosterUrl: s.heroPosterUrl, heroImages: s.heroImages ?? [], heroAlt: s.heroAlt });
 
-export function HeroMediaForm() {
+/** directVideoUpload : vidéo envoyée directement à Vercel Blob (production), sinon au serveur (disque local). */
+export function HeroMediaForm({ directVideoUpload = false }: { directVideoUpload?: boolean }) {
   const [v, setV] = useState<State | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
@@ -46,17 +32,17 @@ export function HeroMediaForm() {
     setProgress(0);
     try {
       if (kind === "video") {
-        const r = await uploadWithProgress("/api/admin/upload-video", "file", files.slice(0, 1), setProgress);
-        setV({ ...v, heroMediaType: "video", heroMediaUrl: r.url! });
+        const url = await uploadVideo(files[0], directVideoUpload, setProgress);
+        setV({ ...v, heroMediaType: "video", heroMediaUrl: url });
       } else if (kind === "images") {
         const room = MAX_IMAGES - (v.heroMediaType === "image" ? v.heroImages.length : 0);
         if (room <= 0) throw new Error(`${MAX_IMAGES} photos maximum`);
         if (files.length > room) toast.info(`Seules ${room} photo(s) ont été ajoutées (maximum ${MAX_IMAGES})`);
-        const r = await uploadWithProgress("/api/admin/upload", "files", files.slice(0, room), setProgress);
-        setV({ ...v, heroMediaType: "image", heroMediaUrl: "", heroPosterUrl: "", heroImages: [...(v.heroMediaType === "image" ? v.heroImages : []), ...r.urls!] });
+        const urls = await uploadImages(files.slice(0, room), setProgress);
+        setV({ ...v, heroMediaType: "image", heroMediaUrl: "", heroPosterUrl: "", heroImages: [...(v.heroMediaType === "image" ? v.heroImages : []), ...urls] });
       } else {
-        const r = await uploadWithProgress("/api/admin/upload", "files", files.slice(0, 1), setProgress);
-        setV({ ...v, heroPosterUrl: r.urls![0] });
+        const [url] = await uploadImages(files.slice(0, 1), setProgress);
+        setV({ ...v, heroPosterUrl: url });
       }
       setErrors({});
       toast.success("Envoyé — pensez à enregistrer");

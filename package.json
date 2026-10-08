@@ -11,9 +11,11 @@
     "seed:admin": "tsx scripts/create-admin.ts",
     "seed:demo": "tsx scripts/seed-demo.ts",
     "sync:nav": "tsx scripts/sync-nav-categories.ts",
-    "warm:media": "tsx scripts/warm-media.ts"
+    "warm:media": "tsx scripts/warm-media.ts",
+    "migrate:prod": "tsx scripts/migrate-to-prod.ts"
   },
   "dependencies": {
+    "@vercel/blob": "^2.8.1",
     "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",
     "jose": "^6.2.12",

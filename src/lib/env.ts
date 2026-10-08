@@ -12,7 +12,8 @@ export const env = {
   shippingFee: Number(process.env.SHIPPING_FLAT_FEE ?? 7),
   freeShippingThreshold: Number(process.env.FREE_SHIPPING_THRESHOLD ?? 150),
   maxSignupsPerIp: Number(process.env.MAX_SIGNUPS_PER_IP_PER_DAY ?? 3),
-  siteUrl: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
+  // Sur Vercel, à défaut de NEXT_PUBLIC_SITE_URL, on prend le domaine de production du projet (…vercel.app ou domaine personnalisé).
+  siteUrl: process.env.NEXT_PUBLIC_SITE_URL ?? (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : "http://localhost:3000"),
   siteName: process.env.NEXT_PUBLIC_SITE_NAME ?? "Accessoires Plus",
   currency: process.env.NEXT_PUBLIC_CURRENCY ?? "DT",
 };

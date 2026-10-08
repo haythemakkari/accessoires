@@ -1,11 +1,10 @@
 import { randomBytes } from "crypto";
-import { mkdir, writeFile } from "fs/promises";
-import path from "path";
 import sharp from "sharp";
 import { api, assertSameOrigin } from "@/lib/api";
 import { requireAdmin } from "@/lib/auth";
 import { warmVariants } from "@/lib/media-server";
 import { AppError } from "@/lib/errors";
+import { saveUpload } from "@/lib/storage";
 
 /** Détecte le vrai format via la signature des premiers octets (le type MIME envoyé par le client est falsifiable). */
 function detectImageExt(b: Buffer): string | null {
@@ -15,17 +14,16 @@ function detectImageExt(b: Buffer): string | null {
   if (b.length > 12 && b.toString("ascii", 4, 8) === "ftyp" && ["avif", "avis"].includes(b.toString("ascii", 8, 12))) return "avif";
   return null;
 }
+// Vercel refuse les requêtes de plus de 4,5 Mo : le navigateur réduit les photos lourdes et les envoie une par une (lib/client/upload.ts).
 const MAX = 5 * 1024 * 1024;
 
-/** Stockage local (public/uploads). En production, remplacer par S3/Cloudinary derrière la même route. */
+/** Stockage : disque local en développement, Vercel Blob en production (lib/storage.ts). */
 export const POST = api(async (req) => {
   assertSameOrigin(req);
   await requireAdmin();
   const form = await req.formData();
   const files = form.getAll("files").filter((f): f is File => f instanceof File);
   if (!files.length || files.length > 10) throw new AppError("1 à 10 fichiers attendus");
-  const dir = path.join(process.cwd(), "public", "uploads");
-  await mkdir(dir, { recursive: true });
   const urls: string[] = [];
   for (const f of files) {
     if (f.size > MAX) throw new AppError("Image trop lourde (5 Mo max)");
@@ -39,8 +37,8 @@ export const POST = api(async (req) => {
       throw new AppError("Image illisible ou corrompue");
     }
     const name = `${Date.now()}-${randomBytes(4).toString("hex")}.webp`;
-    await writeFile(path.join(dir, name), optimized);
-    warmVariants(name); // encode AVIF/WebP en arrière-plan : la 1ʳᵉ visite est déjà prête
+    await saveUpload(name, optimized, "image/webp");
+    warmVariants(name, optimized); // encode AVIF/WebP en arrière-plan : la 1ʳᵉ visite est déjà prête
     urls.push(`/uploads/${name}`);
   }
   return { urls };

@@ -5,6 +5,7 @@ import { ArrowLeft, ArrowRight, Plus, Star, Trash2, X } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { ApiError, fetcher } from "@/lib/client/fetcher";
+import { uploadImages } from "@/lib/client/upload";
 import type { CategoryDTO, ProductDTO } from "@/lib/data";
 import { mediaUrl } from "@/lib/media";
 import { PageHeader, Switch } from "./ui";
@@ -40,12 +41,8 @@ export function ProductForm({ product }: { product?: ProductDTO }) {
     if (!files?.length) return;
     setUploading(true);
     try {
-      const fd = new FormData();
-      [...files].forEach((x) => fd.append("files", x));
-      const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      set("images", [...f.images, ...data.urls]);
+      const urls = await uploadImages([...files]);
+      setF((p) => ({ ...p, images: [...p.images, ...urls] }));
     } catch (e) { toast.error((e as Error).message); } finally { setUploading(false); }
   };
   const move = (i: number, d: number) => { const a = [...f.images]; const j = i + d; if (j < 0 || j >= a.length) return; [a[i], a[j]] = [a[j], a[i]]; set("images", a); };

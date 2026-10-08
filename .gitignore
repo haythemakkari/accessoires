@@ -2,6 +2,9 @@ node_modules
 .next
 .env
 .env.local
+.env.migrate
+.env.vercel
+.vercel
 public/uploads/*
 !public/uploads/.gitkeep
 *.tsbuildinfo

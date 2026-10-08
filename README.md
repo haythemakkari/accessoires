@@ -35,7 +35,7 @@ src/
   lib/                db, auth, token (Edge), api (erreurs, CSRF), rate-limit, data (cache), phone, tunisia, navigation
   stores/             état client (panier persistant, utilisateur)      middleware.ts   1ʳᵉ barrière /admin, /account
 tests/                Vitest : stock concurrent, coupons, anti-abus, téléphone, gouvernorats, SKU, mot de passe
-scripts/              create-admin, seed-demo, sync-nav-categories
+scripts/              create-admin, seed-demo, sync-nav-categories, migrate-to-prod (local → Atlas + Blob)
 ```
 
 ## Sécurité / fiabilité (vérifié)
@@ -66,14 +66,24 @@ Admin → **Page d'accueil** : l'admin choisit **plusieurs photos** (jusqu'à 8,
 - **Rapidité** : pages publiques en ISR (régénérées toutes les 60 s) avec `Cache-Control` CDN et compatibles « page précédente » (bfcache) ; aucune lecture de cookie côté serveur dans la mise en page ; CSS critique intégré ; JavaScript compilé pour navigateurs récents ; animations d'apparition en CSS pur (plus de bibliothèque d'animation) ; images AVIF/WebP adaptatives (`/media`) ; logos versionnés (`?v=`, cache 1 an) ; image LCP chargée en priorité.
 - **Régénérer les icônes / l'image de partage** : `node scripts/generate-icons.mjs`. **Changer un logo** : remplacer le fichier de `public/` et incrémenter `ASSET_VERSION` (`src/lib/assets.ts`).
 
-## Déploiement — checklist
+## Déploiement sur Vercel
 
-1. Variables d'environnement : `MONGODB_URI`, `JWT_SECRET` (≥ 32 car. aléatoires), **`NEXT_PUBLIC_SITE_URL` = URL publique exacte en https (sans `/` final) — elle alimente canoniques, sitemap, robots et données structurées**, `NEXT_PUBLIC_SITE_NAME`. `SHIPPING_FLAT_FEE` / `FREE_SHIPPING_THRESHOLD` ne sont que des valeurs de départ : l'admin les modifie ensuite dans Paramètres.
-2. `npm run build` (idéalement avec la base joignable : l'accueil et les pages d'information sont pré-générées ; sinon elles le sont avec des valeurs par défaut et se régénèrent dès la 1ʳᵉ minute en ligne), puis `npm run seed:admin` et `npm run sync:nav` une fois, et `npm run warm:media` après chaque déploiement pour préparer les images.
-3. Servir en **HTTPS** (cookie `Secure`).
-4. Derrière un proxy, vérifier que `X-Forwarded-For` est posé par *votre* proxy (il sert à la limitation de débit et au plafond d'inscriptions par IP).
-5. Images : `public/uploads` est un stockage local ; sur un hébergeur sans disque persistant, brancher S3/Cloudinary dans `api/admin/upload`.
-6. Limiteur de débit en mémoire (par instance) : utiliser Redis en multi-instances.
+**Stockage des fichiers** (`src/lib/storage.ts`) : sans `BLOB_READ_WRITE_TOKEN`, photos et vidéos vont dans `public/uploads` (développement) ; avec, dans **Vercel Blob** (le disque de Vercel est en lecture seule). Les URL enregistrées en base (`/uploads/…`, `/media/video/…`) sont les mêmes dans les deux cas. Vercel refuse les requêtes de plus de 4,5 Mo : le navigateur réduit les photos lourdes et les envoie une par une, et la vidéo part directement vers Blob (format réel vérifié à l'enregistrement).
+
+1. **MongoDB Atlas** : créer un cluster (région Europe, ex. Paris `eu-west-3`), un utilisateur de base, et autoriser l'accès réseau depuis `0.0.0.0/0` (Vercel n'a pas d'IP fixe). Récupérer la chaîne `mongodb+srv://…/accessoires_plus`.
+2. **Projet Vercel** : importer le dépôt GitHub (Framework : Next.js, rien d'autre à régler). Région des fonctions : Paris (`vercel.json`).
+3. **Vercel Blob** : onglet *Storage* → *Create* → *Blob*, puis le relier au projet (cela crée `BLOB_READ_WRITE_TOKEN`).
+4. **Variables d'environnement** (*Settings → Environment Variables*) : `MONGODB_URI` (Atlas), `JWT_SECRET` (`openssl rand -base64 48`, différent de celui du développement), `NEXT_PUBLIC_SITE_URL` (URL publique exacte en https, sans `/` final — à défaut, le domaine de production Vercel est utilisé), `NEXT_PUBLIC_SITE_NAME`, `NEXT_PUBLIC_CURRENCY`, `SHIPPING_FLAT_FEE`, `FREE_SHIPPING_THRESHOLD`, `MAX_SIGNUPS_PER_IP_PER_DAY`. Redéployer après tout changement.
+5. **Copier les données locales** : `cp .env.migrate.example .env.migrate`, y mettre la chaîne Atlas et le jeton Blob, puis `npm run migrate:prod` (base + `public/uploads`). Sinon, partir de zéro : `npm run seed:admin` et `npm run sync:nav` avec `MONGODB_URI` pointant sur Atlas.
+6. **Domaine** : *Settings → Domains*, puis mettre à jour `NEXT_PUBLIC_SITE_URL` et redéployer.
+
+Sur Vercel, `npm run warm:media` est inutile : chaque taille d'image est mise en cache par le CDN après la 1ʳᵉ visite. Le limiteur de débit est en mémoire, donc propre à chaque instance : suffisant au démarrage, à remplacer par Redis (Upstash) si le trafic grandit.
+
+## Déploiement sur un serveur classique (VPS)
+
+1. Mêmes variables d'environnement (sans `BLOB_READ_WRITE_TOKEN` : les fichiers restent sur le disque, à sauvegarder).
+2. `npm run build`, puis `npm run seed:admin` et `npm run sync:nav` une fois, et `npm run warm:media` après chaque déploiement.
+3. Servir en **HTTPS** (cookie `Secure`) ; derrière un proxy, vérifier que `X-Forwarded-For` est posé par *votre* proxy (limitation de débit, plafond d'inscriptions par IP).
 
 ## Limites connues
 
