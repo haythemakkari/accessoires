@@ -31,7 +31,7 @@ export function ProductCard({ p, priority = false, headingLevel = 3 }: { p: Prod
           {out && <div className="absolute inset-0 flex items-center justify-center bg-white/60 text-sm font-medium backdrop-blur-[1px]">Épuisé</div>}
         </Link>
         {/* Bouton « Ajouter au panier » (hors du lien : pas de bouton imbriqué dans un lien) */}
-        <QuickAdd id={p._id} slug={p.slug} name={p.name} image={p.images[0]} price={p.currentPrice} stock={p.stock} hasVariants={p.variants.length > 0} />
+        <QuickAdd id={p._id} slug={p.slug} name={p.name} image={p.images[0]} price={p.currentPrice} stock={p.stock} hasVariants={p.variants.length > 0} oldPrice={p.currentPrice < p.price ? p.price : p.compareAtPrice && p.compareAtPrice > p.currentPrice ? p.compareAtPrice : null} />
       </div>
       <Link href={href} className="mt-3 block space-y-0.5 px-0.5">
         <p className="text-xs uppercase tracking-widest text-ink/60">{p.category?.name}</p>

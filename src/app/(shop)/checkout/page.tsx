@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Check } from "lucide-react";
+import { Check, Minus, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useCart } from "@/stores/cart";
 import { useUser } from "@/stores/user";
@@ -13,14 +13,15 @@ import { GOVERNORATES } from "@/lib/tunisia";
 import { PHONE_ERROR, parseTunisianPhone } from "@/lib/phone";
 import { CouponBox } from "@/components/shop/CouponBox";
 import { Totals } from "@/components/shop/Totals";
+import { ProductImage } from "@/components/ui/ProductImage";
 
 const STEPS = ["Vos informations", "Livraison", "Récapitulatif"];
-type Form = { fullName: string; phone: string; email: string; line: string; city: string; postalCode: string; notes: string };
-const EMPTY: Form = { fullName: "", phone: "", email: "", line: "", city: "", postalCode: "", notes: "" };
+type Form = { fullName: string; phone: string; email: string; line: string; city: string; district: string; notes: string };
+const EMPTY: Form = { fullName: "", phone: "", email: "", line: "", city: "", district: "", notes: "" };
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { lines, couponCode, clear, setCoupon } = useCart();
+  const { lines, couponCode, clear, setCoupon, setQty, remove } = useCart();
   const user = useUser((s) => s.user);
   const { quote, error, loading } = useQuote();
   const [step, setStep] = useState(0);
@@ -59,7 +60,7 @@ export default function CheckoutPage() {
         method: "POST",
         body: {
           customer: { fullName: f.fullName, phone: f.phone, email: f.email || undefined },
-          address: { line: f.line, city: f.city, postalCode: f.postalCode || undefined, notes: f.notes || undefined },
+          address: { line: f.line, city: f.city, district: f.district.trim() || undefined, notes: f.notes || undefined },
           items: lines.map((l) => ({ productId: l.productId, quantity: l.quantity, variant: l.variant })),
           couponCode: couponCode ?? undefined,
         },
@@ -119,7 +120,6 @@ export default function CheckoutPage() {
           {step === 1 && (
             <div className="space-y-5">
               <h2 className="h-display text-2xl">Adresse de livraison</h2>
-              {field("line", "Adresse", { autoComplete: "street-address" })}
               <div className="grid gap-5 sm:grid-cols-2">
                 <div>
                   <label className="label" htmlFor="city">Gouvernorat</label>
@@ -129,8 +129,9 @@ export default function CheckoutPage() {
                   </select>
                   {errors.city && <p className="mt-1 text-xs text-rose-600">{errors.city}</p>}
                 </div>
-                {field("postalCode", "Code postal (optionnel)", { autoComplete: "postal-code" })}
+                {field("district", "Ville / Délégation (optionnel)", { autoComplete: "address-level2", placeholder: "Ex. La Marsa" })}
               </div>
+              {field("line", "Adresse", { autoComplete: "street-address" })}
               <div>
                 <label className="label" htmlFor="notes">Informations complémentaires</label>
                 <textarea id="notes" rows={3} value={f.notes} onChange={set("notes")} className="input" placeholder="Étage, repère, horaire préféré…" />
@@ -147,9 +148,8 @@ export default function CheckoutPage() {
               </ul>
               <div className="grid gap-4 rounded-xl bg-sand-100 p-4 text-sm sm:grid-cols-2">
                 <div><p className="label">Contact</p>{f.fullName}<br />{f.phone}{f.email && <><br />{f.email}</>}</div>
-                <div><p className="label">Livraison</p>{f.line}<br />{f.city} {f.postalCode}</div>
+                <div><p className="label">Livraison</p>{f.line}<br />{[f.district.trim(), f.city].filter(Boolean).join(", ")}</div>
               </div>
-              <div><p className="label">Code promotionnel</p><CouponBox /></div>
               {error && <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p>}
               <p className="text-sm text-ink/60">Paiement en espèces à la livraison.</p>
             </div>
@@ -163,9 +163,37 @@ export default function CheckoutPage() {
             )}
           </div>
         </div>
-        <aside className="card h-fit p-6 lg:sticky lg:top-28">
-          <h2 className="h-display mb-4 text-xl">Total</h2>
-          <Totals quote={quote} loading={loading} />
+        <aside className="card h-fit overflow-hidden lg:sticky lg:top-28">
+          <div className="flex items-center justify-between gap-3 border-b border-ink/10 px-5 py-4">
+            <h2 className="h-display text-xl">Votre commande</h2>
+            <Link href="/products" className="text-sm font-semibold text-brass-dark hover:underline">Continuer mes achats</Link>
+          </div>
+          <ul className="divide-y divide-ink/10 px-5">
+            {lines.map((l) => (
+              <li key={l.key} className="flex gap-3 py-4">
+                <Link href={`/products/${l.slug}`} className="h-20 w-16 shrink-0 overflow-hidden rounded-xl bg-sand-100"><ProductImage src={l.image} alt={l.name} sizes="64px" /></Link>
+                <div className="flex min-w-0 flex-1 flex-col">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <Link href={`/products/${l.slug}`} className="line-clamp-2 text-sm font-semibold hover:text-brass-dark">{l.name}</Link>
+                      {l.variant && <p className="mt-0.5 text-xs text-ink/60">{l.variant}</p>}
+                    </div>
+                    <p className="shrink-0 text-sm font-bold text-emerald-800">{formatPrice(l.price * l.quantity)}</p>
+                  </div>
+                  <div className="mt-auto flex items-center gap-3 pt-2">
+                    <div className="flex items-center rounded-full border border-ink/20">
+                      <button type="button" className="p-2 disabled:opacity-30" disabled={l.quantity <= 1} onClick={() => setQty(l.key, l.quantity - 1)} aria-label="Diminuer la quantité"><Minus size={14} /></button>
+                      <span className="w-6 text-center text-sm font-semibold tabular-nums">{l.quantity}</span>
+                      <button type="button" className="p-2 disabled:opacity-30" disabled={l.quantity >= l.stock} onClick={() => setQty(l.key, l.quantity + 1)} aria-label="Augmenter la quantité"><Plus size={14} /></button>
+                    </div>
+                    <button type="button" onClick={() => remove(l.key)} className="p-2 text-ink/50 hover:text-clay" aria-label={`Retirer ${l.name}`}><Trash2 size={17} /></button>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+          <div className="border-t border-ink/10 px-5 py-4"><CouponBox /></div>
+          <div className="border-t border-ink/10 bg-sand-50/60 px-5 py-4"><Totals quote={quote} loading={loading} /></div>
         </aside>
       </div>
     </div>

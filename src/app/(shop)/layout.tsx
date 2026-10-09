@@ -9,7 +9,7 @@ export default async function ShopLayout({ children }: { children: React.ReactNo
   return (
     // Colonne pleine hauteur : sur une page courte, le pied de page reste collé au bas de l'écran (pas de vide sous le noir)
     <div className="flex min-h-dvh flex-col">
-      <Header welcomeDiscount={settings.welcomeDiscountPercent} freeShippingThreshold={settings.freeShippingThreshold} siteName={env.siteName} />
+      <Header welcomeDiscount={settings.welcomeDiscountPercent} freeShippingThreshold={settings.freeShippingThreshold} contactPhone={settings.contactPhone} siteName={env.siteName} />
       <main id="contenu" tabIndex={-1} className="w-full flex-1 outline-none">{children}</main>
       <Footer siteName={env.siteName} />
       <MobileTabBar />

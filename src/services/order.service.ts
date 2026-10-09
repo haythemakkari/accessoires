@@ -72,7 +72,7 @@ export async function previewCart(items: CartInput, couponCode: string | undefin
 
 type CheckoutInput = {
   customer: { fullName: string; phone: string; email?: string };
-  address: { line: string; city: string; postalCode?: string; notes?: string };
+  address: { line: string; city: string; district?: string; postalCode?: string; notes?: string };
   items: CartInput;
   couponCode?: string;
 };

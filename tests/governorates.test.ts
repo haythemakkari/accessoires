@@ -19,4 +19,11 @@ describe("gouvernorats", () => {
   it("refuse une ville hors liste ou un texte libre", () => {
     for (const bad of ["Paris", "tunis", "Tunis ", "", "Sfax; DROP TABLE"]) expect(checkoutSchema.safeParse(base(bad)).success).toBe(false);
   });
+  it("la ville / délégation est facultative, nettoyée et limitée à 80 caractères", () => {
+    const withDistrict = (district?: string) => ({ ...base("Tunis"), address: { ...base("Tunis").address, district } });
+    expect(checkoutSchema.safeParse(withDistrict()).success).toBe(true);
+    const r = checkoutSchema.safeParse(withDistrict("  La Marsa  "));
+    expect(r.success && r.data.address.district).toBe("La Marsa");
+    expect(checkoutSchema.safeParse(withDistrict("x".repeat(81))).success).toBe(false);
+  });
 });

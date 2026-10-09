@@ -35,7 +35,7 @@ function useFilterState() {
   return { sp, path, router, pending, update, q, setQ, min, setMin, max, setMax, start };
 }
 
-export function FilterPanel({ categories, withSort = false, compact = false }: { categories: CategoryDTO[]; withSort?: boolean; compact?: boolean }) {
+export function FilterPanel({ categories }: { categories: CategoryDTO[] }) {
   const { sp, path, router, update, q, setQ, min, setMin, max, setMax, start } = useFilterState();
   const cat = sp.get("category") ?? "";
   const gender = sp.get("gender") ?? "";
@@ -57,16 +57,7 @@ export function FilterPanel({ categories, withSort = false, compact = false }: {
 
   return (
     <div className="space-y-7">
-      {withSort && (
-        <div>
-          <label className="label" htmlFor="tri-mobile">Trier par</label>
-          <select id="tri-mobile" value={sp.get("sort") ?? "newest"} onChange={(e) => update({ sort: e.target.value })} className="input">
-            {SORTS.map((x) => <option key={x.v} value={x.v}>{x.l}</option>)}
-          </select>
-        </div>
-      )}
-      {!compact && (
-        <>
+      <>
       <div>
         <label className="label">Recherche</label>
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Nom du produit…" className="input" />
@@ -82,8 +73,7 @@ export function FilterPanel({ categories, withSort = false, compact = false }: {
         <p className="label">Pour</p>
         <div className="flex flex-wrap gap-2">{GENDERS.map((g) => <Chip key={g.v} active={gender === g.v} onClick={() => update({ gender: g.v })}>{g.l}</Chip>)}</div>
       </div>
-        </>
-      )}
+      </>
       <div>
         <p className="label">Prix (DT)</p>
         <div className="flex items-center gap-2">
@@ -93,7 +83,6 @@ export function FilterPanel({ categories, withSort = false, compact = false }: {
         </div>
       </div>
       <div className="space-y-3">
-        {compact && <p className="label !mb-0">Disponibilité</p>}
         <label className="flex cursor-pointer items-center gap-3 text-sm">
           <input type="checkbox" checked={sp.get("inStock") === "true"} onChange={(e) => update({ inStock: e.target.checked ? "true" : "" })} className="h-5 w-5 accent-brass" />
           En stock uniquement
@@ -115,10 +104,8 @@ export function FilterSidebar({ categories }: { categories: CategoryDTO[] }) {
 }
 
 export function ShopToolbar({ categories, total }: { categories: CategoryDTO[]; total: number }) {
-  const { sp, update, pending, router, path, start } = useFilterState();
+  const { sp, update, pending } = useFilterState();
   const [open, setOpen] = useState(false);
-  const hasFilters = [...sp.keys()].some((k) => k !== "page");
-  const reset = () => start(() => router.replace(path, { scroll: false }));
   const cat = sp.get("category") ?? "";
   const gender = sp.get("gender") ?? "";
   const all = !cat && !gender;
@@ -147,16 +134,94 @@ export function ShopToolbar({ categories, total }: { categories: CategoryDTO[]; 
           {SORTS.map((x) => <option key={x.v} value={x.v}>{x.l}</option>)}
         </select>
       </div>
-      {open && (
-        <div className="mb-6 rounded-3xl bg-white p-5 shadow-sm lg:hidden">
-          <FilterPanel key={hasFilters ? "f" : "n"} categories={categories} withSort compact />
-          <div className="mt-6 flex items-center justify-between gap-3 border-t border-ink/10 pt-4">
-            <button onClick={reset} disabled={!hasFilters} className="text-sm text-ink/60 underline underline-offset-4 disabled:no-underline disabled:opacity-40">Réinitialiser les filtres</button>
-            <button onClick={() => setOpen(false)} className="btn-primary !px-6">Voir {total} produit{total > 1 ? "s" : ""}</button>
+      {open && <FilterSheet total={total} onClose={() => setOpen(false)} />}
+    </>
+  );
+}
+
+/** Téléphone : feuille qui monte du bas de l'écran (Filtrer : promo, stock, prix, tri). Les filtres s'appliquent en direct, le bouton ferme la feuille. */
+function FilterSheet({ total, onClose }: { total: number; onClose: () => void }) {
+  const { sp, router, path, update, min, setMin, max, setMax, start } = useFilterState();
+  const [section, setSection] = useState<"prix" | "tri" | null>(null);
+  const hasFilters = [...sp.keys()].some((k) => k !== "page");
+  const sort = sp.get("sort") ?? "newest";
+
+  useEffect(() => {
+    const k = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", k);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { window.removeEventListener("keydown", k); document.body.style.overflow = prev; };
+  }, [onClose]);
+
+  const reset = () => { setMin(""); setMax(""); start(() => router.replace(path, { scroll: false })); };
+  const toggle = (key: "onSale" | "inStock") => update({ [key]: sp.get(key) === "true" ? "" : "true" });
+  const priceHint = min || max ? `${min || "0"} – ${max || "∞"} DT` : "";
+
+  const Row = ({ label, on, onClick, accent }: { label: string; on: boolean; onClick: () => void; accent?: boolean }) => (
+    <div className="flex items-center justify-between border-b border-ink/10 px-5 py-4">
+      <span className={`font-semibold ${accent ? "text-clay" : ""}`}>{label}</span>
+      <button type="button" role="switch" aria-checked={on} aria-label={label} onClick={onClick} className={`relative h-7 w-12 rounded-full transition ${on ? "bg-ink" : "bg-ink/20"}`}>
+        <span className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition-all ${on ? "left-[22px]" : "left-0.5"}`} />
+      </button>
+    </div>
+  );
+  const Head = ({ id, label, hint }: { id: "prix" | "tri"; label: string; hint?: string }) => (
+    <button type="button" aria-expanded={section === id} onClick={() => setSection(section === id ? null : id)} className="flex w-full items-center justify-between px-5 py-4 text-left">
+      <span className="font-semibold">{label}</span>
+      <span className="flex items-center gap-2 text-sm text-ink/60">{hint}<ChevronDown size={16} className={`transition ${section === id ? "rotate-180" : ""}`} /></span>
+    </button>
+  );
+
+  return (
+    <div className="fixed inset-0 z-[60] lg:hidden" role="dialog" aria-modal="true" aria-label="Filtrer">
+      <div className="absolute inset-0 bg-ink/50" onClick={onClose} />
+      <div className="sheet-up absolute inset-x-0 bottom-0 flex max-h-[88dvh] flex-col rounded-t-3xl bg-white shadow-2xl">
+        <div className="mx-auto mt-2.5 h-1 w-10 shrink-0 rounded-full bg-ink/20" />
+        <div className="flex shrink-0 items-center justify-between border-b border-ink/10 px-5 py-3.5">
+          <h2 className="text-xl font-semibold">Filtrer</h2>
+          <div className="flex items-center gap-4">
+            <button type="button" onClick={reset} disabled={!hasFilters} className="text-sm font-medium underline underline-offset-4 disabled:no-underline disabled:opacity-40">Tout effacer</button>
+            <button type="button" onClick={onClose} aria-label="Fermer" className="flex h-10 w-10 items-center justify-center rounded-full bg-sand-100"><X size={18} /></button>
           </div>
         </div>
-      )}
-    </>
+
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <Row label="En promotion" accent on={sp.get("onSale") === "true"} onClick={() => toggle("onSale")} />
+          <Row label="En stock uniquement" on={sp.get("inStock") === "true"} onClick={() => toggle("inStock")} />
+          <div className="border-b border-ink/10">
+            <Head id="prix" label="Prix (DT)" hint={priceHint} />
+            {section === "prix" && (
+              <div className="flex items-center gap-2 px-5 pb-4">
+                <input inputMode="numeric" value={min} onChange={(e) => setMin(e.target.value.replace(/\D/g, ""))} onBlur={() => update({ minPrice: min })} placeholder="Min" aria-label="Prix minimum" className="input" />
+                <span className="text-ink/60">–</span>
+                <input inputMode="numeric" value={max} onChange={(e) => setMax(e.target.value.replace(/\D/g, ""))} onBlur={() => update({ maxPrice: max })} placeholder="Max" aria-label="Prix maximum" className="input" />
+              </div>
+            )}
+          </div>
+          <div className="border-b border-ink/10">
+            <Head id="tri" label="Trier par" hint={SORTS.find((x) => x.v === sort)?.l} />
+            {section === "tri" && (
+              <ul className="px-5 pb-3">
+                {SORTS.map((x) => (
+                  <li key={x.v}>
+                    <button type="button" onClick={() => update({ sort: x.v })} className="flex w-full items-center gap-3 py-2.5 text-left text-sm">
+                      <span className={`flex h-5 w-5 items-center justify-center rounded-full border ${sort === x.v ? "border-ink" : "border-ink/30"}`}>{sort === x.v && <span className="h-2.5 w-2.5 rounded-full bg-ink" />}</span>
+                      {x.l}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+
+        <div className="flex shrink-0 items-center gap-4 border-t border-ink/10 px-5 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+          <button type="button" onClick={() => { update({ minPrice: min, maxPrice: max }); onClose(); }} className="btn-primary flex-1 !py-3.5 !text-base">Voir {total} produit{total > 1 ? "s" : ""}</button>
+          <button type="button" onClick={reset} disabled={!hasFilters} className="text-sm font-medium underline underline-offset-4 disabled:no-underline disabled:opacity-40">Réinitialiser</button>
+        </div>
+      </div>
+    </div>
   );
 }
 

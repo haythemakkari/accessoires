@@ -38,7 +38,7 @@ export default async function OrderDetail({ params }: { params: Promise<{ id: st
         </div>
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
-        <div className="card p-5 text-sm"><p className="label">Livraison</p>{o.customer?.fullName}<br />{o.address?.line}<br />{o.address?.city} {o.address?.postalCode}<br />{o.customer?.phone}</div>
+        <div className="card p-5 text-sm"><p className="label">Livraison</p>{o.customer?.fullName}<br />{o.address?.line}<br />{[o.address?.district, o.address?.city].filter(Boolean).join(", ")} {o.address?.postalCode}<br />{o.customer?.phone}</div>
         <div className="card p-5 text-sm"><p className="label">Historique</p>
           <ul className="space-y-1">{o.statusHistory.map((h, k) => <li key={k} className="flex justify-between"><span>{STATUS_LABEL[h.status ?? ""]}</span><span className="text-ink/60">{formatDate(h.at as unknown as string)}</span></li>)}</ul>
         </div>

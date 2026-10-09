@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Minus, Plus, ShoppingBag } from "lucide-react";
 import { toast } from "sonner";
 import { useCart } from "@/stores/cart";
+import { useAddedSheet } from "@/stores/addedSheet";
 import { useUser } from "@/stores/user";
 import { useVariantChoice } from "./VariantContext";
 import { mediaUrl } from "@/lib/media";
@@ -24,7 +25,8 @@ export function AddToCart({ product }: { product: ProductDTO }) {
     const variant = product.variants.length ? product.variants.map((v) => choice[v.name]).join(" / ") : undefined;
     // l'image du panier = photo de la couleur choisie (sinon image principale)
     add({ productId: product._id, slug: product.slug, name: product.name, image: selectedImage ?? product.images[0], price: product.currentPrice, variant, stock: product.stock }, qty);
-    toast.success("Ajouté au panier", { description: product.name, action: { label: "Voir", onClick: () => (window.location.href = "/cart") } });
+    const oldPrice = product.currentPrice < product.price ? product.price : product.compareAtPrice && product.compareAtPrice > product.currentPrice ? product.compareAtPrice : null;
+    useAddedSheet.getState().show({ productId: product._id, slug: product.slug, name: product.name, image: selectedImage ?? product.images[0], price: product.currentPrice, oldPrice, variant, quantity: qty });
   };
 
   return (

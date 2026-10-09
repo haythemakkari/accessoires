@@ -40,7 +40,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         </section>
         <div className="space-y-4">
           <section className="a-card p-4 text-sm"><p className="a-label">Client</p>{o.customer?.fullName}<br />{o.customer?.phone}{o.customer?.email && <><br />{o.customer.email}</>}{o.user && <p className="mt-1 text-xs text-slate-400">Compte : {o.user.email}</p>}</section>
-          <section className="a-card p-4 text-sm"><p className="a-label">Adresse</p>{o.address?.line}<br />{o.address?.city} {o.address?.postalCode}{o.address?.notes && <p className="mt-2 rounded bg-slate-50 p-2 text-slate-600">{o.address.notes}</p>}</section>
+          <section className="a-card p-4 text-sm"><p className="a-label">Adresse</p>{o.address?.line}<br />{[o.address?.district, o.address?.city].filter(Boolean).join(", ")} {o.address?.postalCode}{o.address?.notes && <p className="mt-2 rounded bg-slate-50 p-2 text-slate-600">{o.address.notes}</p>}</section>
           <section className="a-card p-4 text-sm"><p className="a-label">Historique</p>
             <ul className="space-y-1">{o.statusHistory.map((h, k) => <li key={k} className="flex justify-between"><span>{STATUS_LABEL[h.status ?? ""]}</span><span className="text-slate-400">{formatDate(h.at as unknown as string)}</span></li>)}</ul>
             <p className="mt-3 text-xs text-slate-400">Créée le {formatDate(o.createdAt)} · modifiée le {formatDate(o.updatedAt)}</p>

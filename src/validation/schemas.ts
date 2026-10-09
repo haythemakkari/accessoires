@@ -60,6 +60,7 @@ export const checkoutSchema = z.object({
   address: z.object({
     line: z.string().trim().min(5, "Adresse requise").max(250),
     city: z.enum(GOVERNORATES, { message: "Choisissez un gouvernorat dans la liste" }),
+    district: z.string().trim().max(80, "80 caractères maximum").optional(),
     postalCode: z.string().trim().max(10).optional(),
     notes: z.string().trim().max(500).optional(),
   }),

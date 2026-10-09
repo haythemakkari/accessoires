@@ -39,3 +39,9 @@ body { @apply bg-sand-50 text-ink antialiased font-sans; }
 @media (prefers-reduced-motion: reduce) {
   *, ::before, ::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
 }
+
+@keyframes sheet-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.sheet-up { animation: sheet-up 0.28s cubic-bezier(0.22, 1, 0.36, 1); }
+@keyframes drawer-right { from { transform: translateX(100%); } to { transform: translateX(0); } }
+.drawer-right { animation: drawer-right 0.28s cubic-bezier(0.22, 1, 0.36, 1); }
+@media (prefers-reduced-motion: reduce) { .sheet-up, .drawer-right { animation: none; } }

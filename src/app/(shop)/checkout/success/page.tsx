@@ -6,7 +6,7 @@ import { formatPrice } from "@/lib/utils";
 import type { CartLine } from "@/stores/cart";
 import type { Quote } from "@/lib/client/useQuote";
 
-type Snapshot = { orderNumber: string; lines: CartLine[]; quote: Quote; customer: { fullName: string; phone: string; line: string; city: string } };
+type Snapshot = { orderNumber: string; lines: CartLine[]; quote: Quote; customer: { fullName: string; phone: string; line: string; city: string; district?: string } };
 
 export default function SuccessPage() {
   const [snap, setSnap] = useState<Snapshot | null>(null);
@@ -35,7 +35,7 @@ export default function SuccessPage() {
             <div className="flex justify-between"><span>Livraison</span><span>{snap.quote.shippingFee ? formatPrice(snap.quote.shippingFee) : "Offerte"}</span></div>
             <div className="flex justify-between text-base font-semibold"><span>Total à payer à la livraison</span><span>{formatPrice(snap.quote.total)}</span></div>
           </div>
-          <p className="mt-4 text-ink/60">Livraison à : {snap.customer.line}, {snap.customer.city}</p>
+          <p className="mt-4 text-ink/60">Livraison à : {snap.customer.line}, {[snap.customer.district?.trim(), snap.customer.city].filter(Boolean).join(", ")}</p>
         </div>
       )}
       <div className="mt-6 rounded-xl bg-sand-100 p-4 text-sm text-ink/70">Nous vous appellerons au numéro indiqué pour confirmer la livraison. Conservez votre numéro de commande.</div>
