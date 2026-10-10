@@ -3,6 +3,7 @@ import { GENDERS } from "@/models/Product";
 import { ORDER_STATUSES } from "@/models/Order";
 import { GOVERNORATES } from "@/lib/tunisia";
 import { PHONE_ERROR, parseTunisianPhone } from "@/lib/phone";
+import { ANNOUNCEMENTS_MAX, ANNOUNCEMENT_MAX_LENGTH } from "@/lib/announcements";
 
 const objectId = z.string().regex(/^[a-f\d]{24}$/i, "Identifiant invalide");
 /** Numéro tunisien : validé puis normalisé en « +216XXXXXXXX ». */
@@ -180,6 +181,12 @@ export const welcomeSettingsSchema = z.object({
 
 export const stockSettingsSchema = z.object({
   lowStockThreshold: z.number().int("Nombre entier requis").min(1, "Minimum 1").max(1000, "1000 maximum"),
+});
+
+export const announcementsSchema = z.object({
+  announcements: z
+    .array(z.object({ text: z.string().trim().min(1, "Un message est vide").max(ANNOUNCEMENT_MAX_LENGTH, `${ANNOUNCEMENT_MAX_LENGTH} caractères maximum par message`), isActive: z.boolean().default(true) }))
+    .max(ANNOUNCEMENTS_MAX, `${ANNOUNCEMENTS_MAX} messages maximum`),
 });
 
 const imageUrl = z.string().trim().max(500).regex(/^(\/uploads\/[\w.\-]+|https?:\/\/\S+)$/i, "Lien d'image invalide");

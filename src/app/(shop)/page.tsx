@@ -79,7 +79,7 @@ export default async function HomePage() {
         </div>
       </div>
 
-      {home.featured.length > 0 && <Section eyebrow="Sélection" title="Produits populaires" href="/products?featured=true"><ProductGrid products={home.featured.slice(0, 4)} /></Section>}
+      {home.featured.length > 0 && <Section eyebrow="Sélection" title="Nos coups de cœur" href="/products?featured=true"><ProductGrid products={home.featured.slice(0, 4)} /></Section>}
       {home.latest.length > 0 && <Section eyebrow="Just in" title="Nouveautés" href="/products?sort=newest"><ProductGrid products={home.latest.slice(0, 4)} /></Section>}
 
       {/* PROMO CTA (masquée si l'offre de bienvenue est désactivée) */}

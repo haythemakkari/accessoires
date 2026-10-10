@@ -45,3 +45,8 @@ body { @apply bg-sand-50 text-ink antialiased font-sans; }
 @keyframes drawer-right { from { transform: translateX(100%); } to { transform: translateX(0); } }
 .drawer-right { animation: drawer-right 0.28s cubic-bezier(0.22, 1, 0.36, 1); }
 @media (prefers-reduced-motion: reduce) { .sheet-up, .drawer-right { animation: none; } }
+
+/* Bandeau d'annonces : défilement continu de gauche à droite (le contenu est dupliqué : la boucle revient de -50 % à 0 sans saut). */
+@keyframes ticker-ltr { from { transform: translateX(-50%); } to { transform: translateX(0); } }
+.promo-track { animation: ticker-ltr 45s linear infinite; will-change: transform; }
+.promo-ticker:hover .promo-track { animation-play-state: paused; }

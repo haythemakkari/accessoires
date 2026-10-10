@@ -34,7 +34,7 @@ export function Footer({ siteName }: { siteName: string }) {
           </ul>
         </div>
         <div>
-          <p className="eyebrow !text-brass-light">Service client</p>
+          <p className="eyebrow !text-brass-light">Informations</p>
           <ul className="mt-4 space-y-2 text-sm">
             {SERVICE_LINKS.map((l) => <li key={l.href}><Link href={l.href} className="transition hover:text-white">{l.label}</Link></li>)}
           </ul>

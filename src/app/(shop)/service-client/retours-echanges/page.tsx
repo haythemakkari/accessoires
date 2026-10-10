@@ -48,7 +48,7 @@ export default async function RetoursPage() {
       <nav aria-label="Fil d'Ariane" className="text-xs text-ink/65">
         <ol className="flex flex-wrap items-center gap-1.5">
           <li><Link href="/" className="hover:text-ink">Accueil</Link></li><li aria-hidden>›</li>
-          <li><Link href="/service-client/faq" className="hover:text-ink">Service client</Link></li><li aria-hidden>›</li>
+          <li><Link href="/service-client/faq" className="hover:text-ink">Informations</Link></li><li aria-hidden>›</li>
           <li aria-current="page" className="text-ink">Retours &amp; Échanges</li>
         </ol>
       </nav>

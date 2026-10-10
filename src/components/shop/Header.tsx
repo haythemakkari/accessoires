@@ -7,6 +7,7 @@ import { useUser } from "@/stores/user";
 import { asset } from "@/lib/assets";
 import { MobileMenu } from "./MobileMenu";
 import { CartDrawer } from "./CartDrawer";
+import { PromoTicker } from "./PromoTicker";
 import { AddedSheet } from "./AddedSheet";
 import { useCartDrawer } from "@/stores/cartDrawer";
 import { NAV_GROUPS, groupHref, itemHref, type NavGroup } from "@/lib/navigation";
@@ -45,7 +46,7 @@ function Dropdown({ group }: { group: NavGroup }) {
   );
 }
 
-export function Header({ siteName, freeShippingThreshold, welcomeDiscount, contactPhone }: { siteName: string; freeShippingThreshold: number; welcomeDiscount: number; contactPhone: string }) {
+export function Header({ siteName, freeShippingThreshold, welcomeDiscount, contactPhone, announcements }: { siteName: string; freeShippingThreshold: number; welcomeDiscount: number; contactPhone: string; announcements: string[] }) {
   const count = useCart((s) => cartCount(s.lines));
   // Avant la réponse de /api/auth/me, le cookie « indice » dit déjà si un visiteur est connecté (et son rôle) : pas de clignotement.
   const storeUser = useUser((s) => s.user);
@@ -69,7 +70,7 @@ export function Header({ siteName, freeShippingThreshold, welcomeDiscount, conta
 
   return (
     <header className={`sticky top-0 z-40 transition ${scrolled ? "bg-sand-50/90 shadow-sm backdrop-blur" : "bg-sand-50"}`}>
-      <div className="bg-ink py-2 text-center text-xs tracking-[0.2em] text-sand-200">{[freeShippingThreshold > 0 && `LIVRAISON OFFERTE DÈS ${freeShippingThreshold} DT`, welcomeDiscount > 0 && `-${welcomeDiscount}% SUR VOTRE 1ʳᵉ COMMANDE EN CRÉANT UN COMPTE`].filter(Boolean).join(" · ")}</div>
+      <PromoTicker messages={[freeShippingThreshold > 0 && `LIVRAISON OFFERTE DÈS ${freeShippingThreshold} DT`, welcomeDiscount > 0 && `-${welcomeDiscount}% SUR VOTRE 1ʳᵉ COMMANDE EN CRÉANT UN COMPTE`].filter((m): m is string => !!m).concat(announcements)} />
       <div className="container-x flex h-16 items-center justify-between gap-4">
         <button type="button" onClick={() => setMenu(true)} aria-label="Menu" aria-expanded={menu} className="-ml-2 rounded-full p-2 hover:bg-sand-100 lg:hidden">
           <Menu size={24} />

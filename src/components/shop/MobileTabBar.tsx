@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Headset, Home, Store, User as UserIcon } from "lucide-react";
+import { Home, Info, Store, User as UserIcon } from "lucide-react";
 import { useUser } from "@/stores/user";
 
 /** Barre de navigation fixe en bas de l'écran (téléphone et petite tablette uniquement). */
@@ -17,7 +17,7 @@ export function MobileTabBar() {
   const tabs = [
     { href: "/", label: "Accueil", Icon: Home, active: pathname === "/" },
     { href: "/products", label: "Boutique", Icon: Store, active: pathname.startsWith("/products") || pathname === "/promotions" },
-    { href: "/service-client/faq", label: "Service client", Icon: Headset, active: pathname.startsWith("/service-client") || pathname === "/contact" },
+    { href: "/service-client/faq", label: "Informations", Icon: Info, active: pathname.startsWith("/service-client") || pathname === "/contact" },
     { href: role === "admin" ? "/admin" : role ? "/account" : "/login", label: "Profil", Icon: UserIcon, active: pathname.startsWith("/account") || pathname === "/login" || pathname === "/register" },
   ];
 

@@ -26,7 +26,7 @@ export const USEFUL_LINKS = [
   { label: "Contact", href: "/contact" },
 ];
 
-/** Pages du Service client. */
+/** Pages « Informations » (FAQ, livraison, retours…), au pied de page et dans le menu latéral des pages d'information. */
 export const SERVICE_LINKS = [
   { label: "FAQ", href: "/service-client/faq" },
   { label: "Livraison", href: "/service-client/livraison" },
