@@ -81,9 +81,10 @@ function Body({ close }: { close: () => void }) {
                   <Link href={`/products/${l.slug}`} onClick={close} className="h-24 w-20 shrink-0 overflow-hidden rounded-xl bg-sand-100"><ProductImage src={l.image} alt={l.name} sizes="80px" /></Link>
                   <div className="flex min-w-0 flex-1 flex-col">
                     <Link href={`/products/${l.slug}`} onClick={close} className="line-clamp-2 pr-9 text-sm font-semibold hover:text-brass-dark">{l.name}</Link>
-                    {l.variant && (
+                    {(l.variant || l.packagingName) && (
                       <div className="mt-1.5 flex flex-wrap gap-1.5">
-                        {l.variant.split(" / ").map((v) => <span key={v} className="rounded-md bg-sand-100 px-2 py-0.5 text-xs font-medium">{v}</span>)}
+                        {l.variant?.split(" / ").map((v) => <span key={v} className="rounded-md bg-sand-100 px-2 py-0.5 text-xs font-medium">{v}</span>)}
+                        {l.packagingName && <span className="rounded-md bg-brass/15 px-2 py-0.5 text-xs font-medium text-brass-dark">Packaging {l.packagingName}{l.packagingPrice ? ` · +${formatPrice(l.packagingPrice)}` : ""}</span>}
                       </div>
                     )}
                     <div className="mt-2 flex items-center justify-between gap-2">

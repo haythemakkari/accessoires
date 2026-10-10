@@ -27,7 +27,7 @@ export function AddedSheet() {
   }, [item, hide]);
 
   if (!mounted || !item) return null;
-  return createPortal(<Sheet key={item.productId + (item.variant ?? "")} item={item} onClose={hide} />, document.body);
+  return createPortal(<Sheet key={item.productId + (item.variant ?? "") + (item.packagingName ?? "")} item={item} onClose={hide} />, document.body);
 }
 
 function Sheet({ item, onClose }: { item: AddedItem; onClose: () => void }) {
@@ -53,7 +53,7 @@ function Sheet({ item, onClose }: { item: AddedItem; onClose: () => void }) {
             <div className="h-28 w-24 shrink-0 overflow-hidden rounded-xl bg-sand-100"><ProductImage src={item.image} alt={item.name} sizes="96px" /></div>
             <div className="min-w-0 flex-1">
               <p className="line-clamp-2 font-semibold">{item.name}</p>
-              <p className="mt-1 text-sm text-ink/60">{[item.variant, `Quantité ${item.quantity}`].filter(Boolean).join(" · ")}</p>
+              <p className="mt-1 text-sm text-ink/60">{[item.variant, item.packagingName && `Packaging ${item.packagingName}`, `Quantité ${item.quantity}`].filter(Boolean).join(" · ")}</p>
               <p className={`mt-3 text-xl font-bold ${item.oldPrice ? "text-clay" : "text-emerald-800"}`}>{formatPrice(item.price)}</p>
               {item.oldPrice && <p className="text-xs text-ink/60">au lieu de <span className="line-through">{formatPrice(item.oldPrice)}</span></p>}
             </div>

@@ -2,6 +2,7 @@ import { api, assertSameOrigin, parseBody } from "@/lib/api";
 import { requireAdmin } from "@/lib/auth";
 import { AppError, notFound } from "@/lib/errors";
 import { toSlug } from "@/lib/utils";
+import { toPackagingDocs } from "@/lib/packaging";
 import { Product } from "@/models/Product";
 import { productPatchSchema, productSchema } from "@/validation/schemas";
 import { generateSku, uniqueSlug } from "@/services/product.service";
@@ -30,7 +31,7 @@ export const PUT = api<Ctx>(async (req, { params }) => {
   try {
     // SKU vide = on conserve l'existant (ou on en génère un si le produit n'en avait pas) ; jamais de SKU effacé.
     const sku = data.sku ?? existing.sku ?? (await generateSku());
-    const updated = await Product.findByIdAndUpdate(id, { ...data, sku, slug }, { returnDocument: "after", runValidators: true });
+    const updated = await Product.findByIdAndUpdate(id, { ...data, packagings: toPackagingDocs(data.packagings), sku, slug }, { returnDocument: "after", runValidators: true });
     if (!updated) throw notFound();
     return updated;
   } catch (e) {

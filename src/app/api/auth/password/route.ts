@@ -12,6 +12,7 @@ export const PUT = api(async (req) => {
   rateLimit(`pwd:${me.id}`, 5, 15 * 60 * 1000);
   const { currentPassword, newPassword } = await parseBody(req, me.role === "admin" ? adminChangePasswordSchema : changePasswordSchema);
   const user = await User.findById(me._id).select("+passwordHash");
+  if (user && user.passwordSet === false) throw new AppError("Votre compte utilise la connexion Google : aucun mot de passe à modifier", 409, "NO_PASSWORD");
   if (!user || !(await verifyPassword(currentPassword, user.passwordHash))) throw new AppError("Mot de passe actuel incorrect", 422, "BAD_PASSWORD");
   user.passwordHash = await hashPassword(newPassword);
   user.tokenVersion += 1; // invalide les autres sessions

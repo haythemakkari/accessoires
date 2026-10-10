@@ -10,6 +10,16 @@ const variantSchema = new Schema(
   { _id: false },
 );
 
+/** Option de packaging propre à UN produit (supplément de prix indépendant de celui des autres produits). _id conservé : les paniers et commandes y font référence. */
+const packagingSchema = new Schema({
+  name: { type: String, required: true, trim: true, maxlength: 60 },
+  description: { type: String, trim: true, maxlength: 200, default: "" },
+  image: { type: String, trim: true },
+  price: { type: Number, required: true, min: 0, default: 0 }, // supplément en DT
+  isAvailable: { type: Boolean, default: true },
+  isDefault: { type: Boolean, default: false },
+});
+
 const productSchema = new Schema(
   {
     name: { type: String, required: true, trim: true, maxlength: 200 },
@@ -28,6 +38,9 @@ const productSchema = new Schema(
     stock: { type: Number, required: true, min: 0, default: 0 },
     sku: { type: String, required: true, unique: true, trim: true, uppercase: true },
     variants: { type: [variantSchema], default: [] },
+    /** Packaging : désactivé par défaut (le produit se vend alors comme avant, sans choix supplémentaire). */
+    packagingEnabled: { type: Boolean, default: false },
+    packagings: { type: [packagingSchema], default: [] },
     isActive: { type: Boolean, default: true },
     isFeatured: { type: Boolean, default: false },
     /** Compteur de ventes → tri par popularité / meilleures ventes. */

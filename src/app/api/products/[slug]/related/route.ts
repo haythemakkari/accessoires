@@ -19,8 +19,8 @@ export const GET = api<Ctx>(async (_req, { params }) => {
     list = [...same, ...more];
   }
   const items = list.map((x) => {
-    const d = withPrice(plain(x)) as unknown as { _id: string; name: string; slug: string; images: string[]; price: number; salePrice?: number; isOnSale: boolean; compareAtPrice?: number; currentPrice: number; stock: number; variants: unknown[] };
-    return { _id: d._id, name: d.name, slug: d.slug, image: d.images[0] ?? null, price: d.price, salePrice: d.salePrice ?? null, isOnSale: d.isOnSale, compareAtPrice: d.compareAtPrice ?? null, currentPrice: d.currentPrice, stock: d.stock, hasVariants: d.variants.length > 0 };
+    const d = withPrice(plain(x)) as unknown as { _id: string; name: string; slug: string; images: string[]; price: number; salePrice?: number; isOnSale: boolean; compareAtPrice?: number; currentPrice: number; stock: number; variants: unknown[]; packagingEnabled?: boolean; packagings?: { isAvailable: boolean }[] };
+    return { _id: d._id, name: d.name, slug: d.slug, image: d.images[0] ?? null, price: d.price, salePrice: d.salePrice ?? null, isOnSale: d.isOnSale, compareAtPrice: d.compareAtPrice ?? null, currentPrice: d.currentPrice, stock: d.stock, hasVariants: d.variants.length > 0 || (!!d.packagingEnabled && !!d.packagings?.some((o) => o.isAvailable)) };
   });
   return { items };
 });

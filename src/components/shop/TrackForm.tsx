@@ -8,7 +8,7 @@ import { STATUS_LABEL } from "@/lib/status";
 import { PHONE_ERROR, parseTunisianPhone } from "@/lib/phone";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 
-type Result = { orderNumber: string; status: string; createdAt: string; total: number; items: { name: string; quantity: number; variant?: string }[]; history: { status: string; at: string }[] };
+type Result = { orderNumber: string; status: string; createdAt: string; total: number; items: { name: string; quantity: number; variant?: string; packaging?: string }[]; history: { status: string; at: string }[] };
 
 const STEPS = [
   { key: "pending", label: "Commande reçue" },
@@ -77,7 +77,7 @@ export function TrackForm() {
         <div className="card space-y-4 p-6 text-sm">
           <div className="flex flex-wrap items-center justify-between gap-2"><p className="font-mono text-base font-semibold">{res.orderNumber}</p><StatusBadge status={res.status} /></div>
           <Progress status={res.status} />
-          <ul className="divide-y divide-ink/10">{res.items.map((i, k) => <li key={k} className="py-2">{i.quantity} × {i.name}{i.variant && <span className="text-ink/60"> ({i.variant})</span>}</li>)}</ul>
+          <ul className="divide-y divide-ink/10">{res.items.map((i, k) => <li key={k} className="py-2">{i.quantity} × {i.name}{i.variant && <span className="text-ink/60"> ({i.variant})</span>}{i.packaging && <span className="text-ink/60"> · {i.packaging}</span>}</li>)}</ul>
           <p className="font-medium">Total : {formatPrice(res.total)}</p>
           <div><p className="label">Historique</p><ul className="space-y-1">{res.history.map((h, k) => <li key={k} className="flex justify-between"><span>{STATUS_LABEL[h.status]}</span><span className="text-ink/60">{formatDate(h.at)}</span></li>)}</ul></div>
         </div>

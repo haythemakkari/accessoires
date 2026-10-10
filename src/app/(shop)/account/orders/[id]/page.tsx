@@ -27,7 +27,7 @@ export default async function OrderDetail({ params }: { params: Promise<{ id: st
       <div className="card divide-y divide-ink/10">
         {o.items.map((i, k) => (
           <div key={k} className="flex justify-between gap-3 p-4 text-sm">
-            <span>{i.quantity} × {i.name}{i.variant && <span className="text-ink/60"> ({i.variant})</span>}</span><span>{formatPrice(i.price * i.quantity)}</span>
+            <span>{i.quantity} × {i.name}{i.variant && <span className="text-ink/60"> ({i.variant})</span>}{i.packaging && <span className="block text-xs text-ink/60">Packaging : {i.packaging.name}{i.packaging.supplement > 0 ? ` (+${formatPrice(i.packaging.supplement)})` : ""}</span>}</span><span>{formatPrice(i.price * i.quantity)}</span>
           </div>
         ))}
         <div className="space-y-1 p-4 text-sm">

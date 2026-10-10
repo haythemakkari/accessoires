@@ -8,12 +8,12 @@ import { fetcher } from "@/lib/client/fetcher";
 import { mergeCartRefs, type CartRef } from "@/lib/cart-merge";
 
 type Hydrated =
-  | { state: "ok" | "adjusted"; productId: string; variant?: string; quantity: number; requested: number; name: string; slug: string; image?: string; price: number; stock: number }
-  | { state: "unavailable"; productId: string; variant?: string; reason: "missing" | "variant" | "soldout" };
+  | { state: "ok" | "adjusted"; productId: string; variant?: string; packagingId?: string; packagingName?: string; packagingPrice?: number; quantity: number; requested: number; name: string; slug: string; image?: string; price: number; stock: number }
+  | { state: "unavailable"; productId: string; variant?: string; packagingId?: string; reason: "missing" | "variant" | "soldout" | "packaging" };
 
-const toRefs = (lines: CartLine[]): CartRef[] => lines.map((l) => ({ productId: l.productId, quantity: l.quantity, variant: l.variant }));
+const toRefs = (lines: CartLine[]): CartRef[] => lines.map((l) => ({ productId: l.productId, quantity: l.quantity, variant: l.variant, packagingId: l.packagingId }));
 const hydrate = (refs: CartRef[]) => fetcher<{ lines: Hydrated[] }>("/api/cart/hydrate", { method: "POST", body: { items: refs } }).then((r) => r.lines);
-const REASON = { missing: "n'est plus disponible", variant: "n'est plus proposé dans cette option", soldout: "est épuisé" } as const;
+const REASON = { missing: "n'est plus disponible", variant: "n'est plus proposé dans cette option", soldout: "est épuisé", packaging: "n'est plus disponible avec ce packaging" } as const;
 
 /**
  * Panier persistant. Rien à l'écran : ce composant
@@ -35,17 +35,17 @@ export function CartSync() {
   const refresh = async (lines: CartLine[], opts: { notify: boolean }) => {
     if (lines.length === 0) return 0;
     const result = await hydrate(toRefs(lines));
-    const prev = new Map(lines.map((l) => [lineKey(l.productId, l.variant), l]));
+    const prev = new Map(lines.map((l) => [lineKey(l.productId, l.variant, l.packagingId), l]));
     const next: CartLine[] = [];
     const removed: string[] = [];
     const adjusted: string[] = [];
     let priceChanged = false;
     for (const r of result) {
-      const old = prev.get(lineKey(r.productId, r.variant));
+      const old = prev.get(lineKey(r.productId, r.variant, r.packagingId));
       if (r.state === "unavailable") { if (old) removed.push(`« ${old.name} » ${REASON[r.reason]}`); continue; }
       if (r.state === "adjusted") adjusted.push(r.name);
       if (old && Math.abs(old.price - r.price) > 0.001) priceChanged = true;
-      next.push({ key: lineKey(r.productId, r.variant), productId: r.productId, slug: r.slug, name: r.name, image: r.image, price: r.price, quantity: r.quantity, variant: r.variant, stock: r.stock });
+      next.push({ key: lineKey(r.productId, r.variant, r.packagingId), productId: r.productId, slug: r.slug, name: r.name, image: r.image, price: r.price, quantity: r.quantity, variant: r.variant, packagingId: r.packagingId, packagingName: r.packagingName, packagingPrice: r.packagingPrice, stock: r.stock });
     }
     const changed = JSON.stringify(next) !== JSON.stringify(lines);
     if (changed) { applying.current = true; useCart.getState().setLines(next); applying.current = false; }
@@ -100,7 +100,7 @@ export function CartSync() {
         const before = cartCount(local.lines);
         if (merged.length) {
           const lines = await hydrate(merged);
-          const kept: CartLine[] = lines.flatMap((r) => r.state === "unavailable" ? [] : [{ key: lineKey(r.productId, r.variant), productId: r.productId, slug: r.slug, name: r.name, image: r.image, price: r.price, quantity: r.quantity, variant: r.variant, stock: r.stock }]);
+          const kept: CartLine[] = lines.flatMap((r) => r.state === "unavailable" ? [] : [{ key: lineKey(r.productId, r.variant, r.packagingId), productId: r.productId, slug: r.slug, name: r.name, image: r.image, price: r.price, quantity: r.quantity, variant: r.variant, packagingId: r.packagingId, packagingName: r.packagingName, packagingPrice: r.packagingPrice, stock: r.stock }]);
           applying.current = true;
           useCart.getState().setLines(kept, local.couponCode ?? server.couponCode);
           applying.current = false;

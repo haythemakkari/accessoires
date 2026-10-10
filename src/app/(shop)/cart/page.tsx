@@ -42,6 +42,7 @@ export default function CartPage() {
                   <div>
                     <Link href={`/products/${l.slug}`} className="font-medium hover:text-brass-dark">{l.name}</Link>
                     {l.variant && <p className="text-sm text-ink/60">{l.variant}</p>}
+                    {l.packagingName && <p className="text-sm text-ink/60">Packaging : {l.packagingName}{l.packagingPrice ? ` (+${formatPrice(l.packagingPrice)})` : ""}</p>}
                     <p className="mt-1 text-sm text-ink/60">{formatPrice(l.price)} / unité</p>
                   </div>
                   <p className="font-semibold">{formatPrice(l.price * l.quantity)}</p>

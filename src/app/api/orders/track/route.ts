@@ -20,7 +20,7 @@ export const POST = api(async (req) => {
     status: o.status,
     createdAt: o.createdAt,
     total: o.total,
-    items: o.items.map((i) => ({ name: i.name, quantity: i.quantity, variant: i.variant })),
+    items: o.items.map((i) => ({ name: i.name, quantity: i.quantity, variant: i.variant, packaging: i.packaging?.name })),
     history: o.statusHistory.map((h) => ({ status: h.status, at: h.at })),
   };
 });

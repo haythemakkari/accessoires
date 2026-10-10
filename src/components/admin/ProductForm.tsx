@@ -10,19 +10,20 @@ import type { CategoryDTO, ProductDTO } from "@/lib/data";
 import { mediaUrl } from "@/lib/media";
 import { PageHeader, Switch } from "./ui";
 import { VariantEditor, toVariantPayload, toVariantState, type VariantState } from "./VariantEditor";
+import { PackagingEditor, emptyPackaging, toPackagingPayload, toPackagingState, type PackagingForm } from "./PackagingEditor";
 import { STOCK_CHANGED_EVENT } from "./NotificationBell";
 
 type FormState = {
   name: string; description: string; price: string; compareAtPrice: string; salePrice: string; isOnSale: boolean; category: string;
-  gender: "homme" | "femme" | "unisex"; images: string[]; stock: string; sku: string; variants: VariantState[]; isActive: boolean; isFeatured: boolean;
+  gender: "homme" | "femme" | "unisex"; images: string[]; stock: string; sku: string; variants: VariantState[]; packaging: PackagingForm; isActive: boolean; isFeatured: boolean;
 };
 
-const blank: FormState = { name: "", description: "", price: "", compareAtPrice: "", salePrice: "", isOnSale: false, category: "", gender: "unisex", images: [], stock: "0", sku: "", variants: [], isActive: true, isFeatured: false };
+const blank: FormState = { name: "", description: "", price: "", compareAtPrice: "", salePrice: "", isOnSale: false, category: "", gender: "unisex", images: [], stock: "0", sku: "", variants: [], packaging: emptyPackaging(), isActive: true, isFeatured: false };
 
 const fromProduct = (p: ProductDTO): FormState => ({
   name: p.name, description: p.description, price: String(p.price), compareAtPrice: p.compareAtPrice != null ? String(p.compareAtPrice) : "", salePrice: p.salePrice != null ? String(p.salePrice) : "",
   isOnSale: p.isOnSale, category: p.category?._id ?? String(p.category ?? ""), gender: p.gender, images: p.images, stock: String(p.stock), sku: p.sku,
-  variants: toVariantState(p.variants), isActive: p.isActive, isFeatured: p.isFeatured,
+  variants: toVariantState(p.variants), packaging: toPackagingState(p.packagingEnabled, p.packagings), isActive: p.isActive, isFeatured: p.isFeatured,
 });
 
 export function ProductForm({ product }: { product?: ProductDTO }) {
@@ -56,6 +57,7 @@ export function ProductForm({ product }: { product?: ProductDTO }) {
       name: f.name, description: f.description, price: num(f.price) ?? 0, compareAtPrice: num(f.compareAtPrice), salePrice: num(f.salePrice), isOnSale: f.isOnSale,
       category: f.category, gender: f.gender, images: f.images, stock: Math.floor(num(f.stock) ?? 0), sku: f.sku, isActive: f.isActive, isFeatured: f.isFeatured,
       variants: toVariantPayload(f.variants),
+      ...toPackagingPayload(f.packaging),
     };
     try {
       await fetcher(product ? `/api/admin/products/${product._id}` : "/api/admin/products", { method: product ? "PUT" : "POST", body });
@@ -114,6 +116,7 @@ export function ProductForm({ product }: { product?: ProductDTO }) {
           </section>
           <VariantEditor value={f.variants} onChange={(v) => set("variants", v)} productImages={f.images} />
           {err("variants")}
+          <PackagingEditor value={f.packaging} onChange={(v) => set("packaging", v)} error={Object.entries(errors).find(([k]) => k.startsWith("packaging"))?.[1]} />
         </div>
         <div className="space-y-4">
           <section className="a-card space-y-4 p-4">

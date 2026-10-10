@@ -1,3 +1,4 @@
+import { publicProduct, type PackagingOption } from "@/lib/packaging";
 import { unstable_cache, revalidateTag } from "next/cache";
 import { connectDB } from "./db";
 import { plain, withPrice } from "./utils";
@@ -11,7 +12,7 @@ export type CategoryDTO = { _id: string; name: string; slug: string; description
 export type ProductDTO = {
   _id: string; name: string; slug: string; description: string; price: number; compareAtPrice?: number; salePrice?: number; isOnSale: boolean;
   currentPrice: number; gender: "homme" | "femme" | "unisex"; images: string[]; stock: number; sku: string; isActive: boolean; isFeatured: boolean;
-  variants: { name: string; options: string[]; optionImages?: { option: string; image: string }[] }[]; soldCount: number; category: { _id: string; name: string; slug: string } | null; createdAt: string; updatedAt: string;
+  variants: { name: string; options: string[]; optionImages?: { option: string; image: string }[] }[]; packagingEnabled?: boolean; packagings?: PackagingOption[]; soldCount: number; category: { _id: string; name: string; slug: string } | null; createdAt: string; updatedAt: string;
 };
 
 const TAG = "catalog";
@@ -78,7 +79,7 @@ export const getProductBySlug = (slug: string) =>
     async () => {
       await connectDB();
       const p = await Product.findOne({ slug, isActive: true }).populate("category", "name slug").lean();
-      return p ? (withPrice(plain(p)) as unknown as ProductDTO) : null;
+      return p ? (publicProduct(withPrice(plain(p))) as unknown as ProductDTO) : null;
     },
     ["product", slug],
     { revalidate: 60, tags: [TAG] },
@@ -89,7 +90,7 @@ export const getRelated = (p: ProductDTO) =>
     async () => {
       await connectDB();
       const items = await Product.find({ isActive: true, category: p.category?._id, _id: { $ne: p._id } }).sort({ soldCount: -1 }).limit(4).populate("category", "name slug").lean();
-      return plain(items).map(withPrice) as unknown as ProductDTO[];
+      return plain(items).map((x) => publicProduct(withPrice(x))) as unknown as ProductDTO[];
     },
     ["related", p._id],
     { revalidate: 120, tags: [TAG] },

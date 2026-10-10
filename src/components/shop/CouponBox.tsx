@@ -15,7 +15,7 @@ export function CouponBox() {
     if (!c) return;
     setBusy(true);
     try {
-      await fetcher("/api/cart/quote", { method: "POST", body: { items: lines.map((l) => ({ productId: l.productId, quantity: l.quantity, variant: l.variant })), couponCode: c } });
+      await fetcher("/api/cart/quote", { method: "POST", body: { items: lines.map((l) => ({ productId: l.productId, quantity: l.quantity, variant: l.variant, packagingId: l.packagingId })), couponCode: c } });
       setCoupon(c);
       setCode("");
       toast.success("Code promo appliqué", { description: c });

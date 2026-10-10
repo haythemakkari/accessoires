@@ -5,7 +5,7 @@ const cartSchema = new Schema(
   {
     user: { type: Schema.Types.ObjectId, ref: "User", required: true, unique: true },
     items: {
-      type: [{ product: { type: Schema.Types.ObjectId, ref: "Product", required: true }, variant: { type: String, trim: true }, quantity: { type: Number, required: true, min: 1, max: 50 }, _id: false }],
+      type: [{ product: { type: Schema.Types.ObjectId, ref: "Product", required: true }, variant: { type: String, trim: true }, packaging: { type: String, trim: true }, quantity: { type: Number, required: true, min: 1, max: 50 }, _id: false }],
       default: [],
     },
     couponCode: { type: String, trim: true, uppercase: true },

@@ -12,6 +12,9 @@ const itemSchema = new Schema(
     price: { type: Number, required: true, min: 0 }, // prix unitaire figé au moment de la commande
     quantity: { type: Number, required: true, min: 1 },
     variant: { type: String },
+    /** Copie figée du packaging choisi : une modification ultérieure du catalogue ne change jamais une commande passée. */
+    basePrice: { type: Number, min: 0 }, // prix du produit seul (sans packaging)
+    packaging: { type: new Schema({ id: { type: String }, name: { type: String, required: true }, description: { type: String }, supplement: { type: Number, required: true, min: 0 } }, { _id: false }) },
   },
   { _id: false },
 );

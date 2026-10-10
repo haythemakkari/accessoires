@@ -10,7 +10,7 @@ import { Gallery } from "@/components/shop/Gallery";
 import { AddToCart } from "@/components/shop/AddToCart";
 import { VariantProvider } from "@/components/shop/VariantContext";
 import { allOptionImages } from "@/lib/variants";
-import { Price } from "@/components/ui/Price";
+import { ProductPrice } from "@/components/shop/ProductPrice";
 import { ProductGrid } from "@/components/shop/ProductGrid";
 
 export const revalidate = 60; // générée à la 1ʳᵉ visite puis mise en cache 60 s (pas de base requise au build)
@@ -86,13 +86,13 @@ export default async function ProductPage({ params }: { params: Params }) {
         <Link href="/" className="hover:text-ink">Accueil</Link> / <Link href="/products" className="hover:text-ink">Boutique</Link>
         {p.category && <> / <Link href={`/products?category=${p.category.slug}`} className="hover:text-ink">{p.category.name}</Link></>}
       </nav>
-      <VariantProvider variants={p.variants}>
+      <VariantProvider variants={p.variants} packagings={p.packagings ?? []}>
       <div className="grid gap-10 lg:grid-cols-2 lg:gap-16">
         <Gallery images={p.images} name={p.name} />
         <div className="lg:py-4">
           <p className="eyebrow">{GENDER_LABEL[p.gender]} · {p.category?.name}</p>
           <h1 className="h-display mt-2 text-3xl sm:text-4xl">{p.name}</h1>
-          <div className="mt-4"><Price size="lg" price={p.price} salePrice={p.salePrice} compareAt={p.compareAtPrice} onSale={p.isOnSale} /></div>
+          <div className="mt-4"><ProductPrice price={p.price} salePrice={p.salePrice} compareAt={p.compareAtPrice} onSale={p.isOnSale} currentPrice={p.currentPrice} /></div>
           {p.description && <p className="mt-6 whitespace-pre-line leading-relaxed text-ink/70">{p.description}</p>}
           <div className="mt-8 border-t border-ink/10 pt-8"><AddToCart product={p} /></div>
           <p className="mt-6 text-xs text-ink/60">Réf. {p.sku} · Paiement à la livraison</p>

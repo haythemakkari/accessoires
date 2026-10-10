@@ -28,7 +28,7 @@ export default function SuccessPage() {
       {snap && (
         <div className="card mt-8 p-6 text-left text-sm">
           <ul className="divide-y divide-ink/10">
-            {snap.lines.map((l) => <li key={l.key} className="flex justify-between py-2"><span>{l.quantity} × {l.name}{l.variant && ` (${l.variant})`}</span><span>{formatPrice(l.price * l.quantity)}</span></li>)}
+            {snap.lines.map((l) => <li key={l.key} className="flex justify-between py-2"><span>{l.quantity} × {l.name}{l.variant && ` (${l.variant})`}{l.packagingName && ` · ${l.packagingName}`}</span><span>{formatPrice(l.price * l.quantity)}</span></li>)}
           </ul>
           <div className="mt-3 space-y-1 border-t border-ink/10 pt-3">
             {snap.quote.discount > 0 && <div className="flex justify-between text-emerald-700"><span>Réduction</span><span>-{formatPrice(snap.quote.discount)}</span></div>}

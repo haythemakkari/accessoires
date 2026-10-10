@@ -15,6 +15,10 @@ const userSchema = new Schema(
     tokenVersion: { type: Number, default: 0 },
     signupIp: { type: String, index: true },
     welcomeCouponCode: { type: String },
+    /** Identifiant Google (« sub ») : compte créé ou relié via « Continuer avec Google ». */
+    googleId: { type: String, sparse: true, unique: true },
+    /** false = compte créé via Google, sans mot de passe défini (le hash stocké est aléatoire et inutilisable). */
+    passwordSet: { type: Boolean, default: true },
   },
   { timestamps: true },
 );

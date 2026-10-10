@@ -4,11 +4,12 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { AuthForm } from "@/components/shop/AuthForm";
 import { getShopSettings } from "@/lib/data";
+import { googleButtonVisible } from "@/lib/google-oauth";
 
 export const metadata: Metadata = { title: "Créer un compte", robots: { index: false } };
 
 export default async function Page() {
   if (await getCurrentUser()) redirect("/account");
   const { welcomeDiscountPercent } = await getShopSettings();
-  return <Suspense><AuthForm mode="register" welcomeDiscount={welcomeDiscountPercent} /></Suspense>;
+  return <Suspense><AuthForm mode="register" welcomeDiscount={welcomeDiscountPercent} google={googleButtonVisible()} /></Suspense>;
 }

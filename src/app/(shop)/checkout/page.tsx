@@ -61,7 +61,7 @@ export default function CheckoutPage() {
         body: {
           customer: { fullName: f.fullName, phone: f.phone, email: f.email || undefined },
           address: { line: f.line, city: f.city, district: f.district.trim() || undefined, notes: f.notes || undefined },
-          items: lines.map((l) => ({ productId: l.productId, quantity: l.quantity, variant: l.variant })),
+          items: lines.map((l) => ({ productId: l.productId, quantity: l.quantity, variant: l.variant, packagingId: l.packagingId })),
           couponCode: couponCode ?? undefined,
         },
       });
@@ -143,7 +143,7 @@ export default function CheckoutPage() {
               <h2 className="h-display text-2xl">Récapitulatif</h2>
               <ul className="divide-y divide-ink/10 text-sm">
                 {lines.map((l) => (
-                  <li key={l.key} className="flex justify-between py-3"><span>{l.quantity} × {l.name}{l.variant && <span className="text-ink/60"> ({l.variant})</span>}</span><span>{formatPrice(l.price * l.quantity)}</span></li>
+                  <li key={l.key} className="flex justify-between py-3"><span>{l.quantity} × {l.name}{l.variant && <span className="text-ink/60"> ({l.variant})</span>}{l.packagingName && <span className="text-ink/60"> · {l.packagingName}</span>}</span><span>{formatPrice(l.price * l.quantity)}</span></li>
                 ))}
               </ul>
               <div className="grid gap-4 rounded-xl bg-sand-100 p-4 text-sm sm:grid-cols-2">
@@ -177,6 +177,7 @@ export default function CheckoutPage() {
                     <div className="min-w-0">
                       <Link href={`/products/${l.slug}`} className="line-clamp-2 text-sm font-semibold hover:text-brass-dark">{l.name}</Link>
                       {l.variant && <p className="mt-0.5 text-xs text-ink/60">{l.variant}</p>}
+                      {l.packagingName && <p className="mt-0.5 text-xs text-ink/60">Packaging : {l.packagingName}{l.packagingPrice ? ` (+${formatPrice(l.packagingPrice)})` : ""}</p>}
                     </div>
                     <p className="shrink-0 text-sm font-bold text-emerald-800">{formatPrice(l.price * l.quantity)}</p>
                   </div>

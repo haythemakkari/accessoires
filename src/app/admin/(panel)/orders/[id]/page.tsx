@@ -28,7 +28,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
           <table className="w-full text-sm">
             <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500"><tr><th className="px-4 py-2.5">Produit</th><th className="px-4 py-2.5">Prix</th><th className="px-4 py-2.5">Qté</th><th className="px-4 py-2.5 text-right">Total</th></tr></thead>
             <tbody className="divide-y divide-slate-100">
-              {o.items.map((i, k) => <tr key={k}><td className="px-4 py-2.5">{i.name}{i.variant && <span className="text-slate-400"> · {i.variant}</span>}<p className="text-xs text-slate-400">{i.sku}</p></td><td className="px-4 py-2.5">{formatPrice(i.price)}</td><td className="px-4 py-2.5">{i.quantity}</td><td className="px-4 py-2.5 text-right">{formatPrice(i.price * i.quantity)}</td></tr>)}
+              {o.items.map((i, k) => <tr key={k}><td className="px-4 py-2.5">{i.name}{i.variant && <span className="text-slate-400"> · {i.variant}</span>}{i.packaging && <p className="text-xs text-indigo-600">Packaging : {i.packaging.name} (+{formatPrice(i.packaging.supplement)}) · produit {formatPrice(i.basePrice ?? i.price)}</p>}<p className="text-xs text-slate-400">{i.sku}</p></td><td className="px-4 py-2.5">{formatPrice(i.price)}</td><td className="px-4 py-2.5">{i.quantity}</td><td className="px-4 py-2.5 text-right">{formatPrice(i.price * i.quantity)}</td></tr>)}
             </tbody>
           </table>
           <div className="space-y-1 border-t border-slate-200 p-4 text-sm">

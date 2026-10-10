@@ -1,6 +1,7 @@
 "use client";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { cartKey } from "@/lib/packaging";
 
 export type CartLine = {
   key: string;
@@ -11,6 +12,10 @@ export type CartLine = {
   price: number;
   quantity: number;
   variant?: string;
+  /** Packaging choisi (facultatif) : `price` est alors le prix FINAL unitaire (produit + supplément). */
+  packagingId?: string;
+  packagingName?: string;
+  packagingPrice?: number;
   stock: number;
 };
 
@@ -32,7 +37,7 @@ type CartState = {
   setCoupon: (code: string | null) => void;
 };
 
-export const lineKey = (productId: string, variant?: string) => `${productId}|${variant ?? ""}`;
+export const lineKey = cartKey;
 
 export const useCart = create<CartState>()(
   persist(
@@ -43,7 +48,7 @@ export const useCart = create<CartState>()(
       setLines: (lines, couponCode) => set((s) => ({ lines, couponCode: couponCode === undefined ? s.couponCode : couponCode, updatedAt: Date.now() })),
       add: (line, qty = 1) =>
         set((s) => {
-          const key = lineKey(line.productId, line.variant);
+          const key = lineKey(line.productId, line.variant, line.packagingId);
           const existing = s.lines.find((l) => l.key === key);
           if (existing) {
             return { updatedAt: Date.now(), lines: s.lines.map((l) => (l.key === key ? { ...l, ...line, quantity: Math.min(l.quantity + qty, line.stock) } : l)) };

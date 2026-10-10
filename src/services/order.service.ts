@@ -9,14 +9,15 @@ import { assertCouponUsable, redeemCoupon, releaseCoupon } from "./coupon.servic
 import { computeDiscount, computeTotals } from "./pricing";
 import { getSettings } from "./settings.service";
 import { imageForVariantString } from "@/lib/variants";
+import { cartKey, finalUnitPrice } from "@/lib/packaging";
 
-export type CartInput = { productId: string; quantity: number; variant?: string }[];
+export type CartInput = { productId: string; quantity: number; variant?: string; packagingId?: string }[];
 
 /** Relit les produits en base : les prix et le stock envoyés par le client ne sont jamais utilisés. */
 export async function priceCart(items: CartInput) {
-  const merged = new Map<string, { productId: string; quantity: number; variant?: string }>();
+  const merged = new Map<string, CartInput[number]>();
   for (const it of items) {
-    const key = `${it.productId}|${it.variant ?? ""}`;
+    const key = cartKey(it.productId, it.variant, it.packagingId);
     const prev = merged.get(key);
     merged.set(key, prev ? { ...prev, quantity: prev.quantity + it.quantity } : { ...it });
   }
@@ -32,7 +33,16 @@ export async function priceCart(items: CartInput) {
       const valid = p.variants.length === chosen.length && p.variants.every((v, i) => v.options.includes(chosen[i]));
       if (!valid) throw new AppError(`Choisissez une option valide pour « ${p.name} »`, 422, "VARIANT_INVALID");
     }
-    return { product: p, quantity: l.quantity, variant: l.variant, price: effectivePrice(p) };
+    // Packaging : l'option doit appartenir à CE produit, le packaging doit être activé et l'option disponible. Le prix vient toujours de la base.
+    let packaging: { id: string; name: string; description?: string; supplement: number } | undefined;
+    if (l.packagingId) {
+      const opt = p.packagingEnabled ? p.packagings.find((o) => String(o._id) === l.packagingId) : undefined;
+      if (!opt) throw new AppError(`Le packaging choisi n'est pas proposé pour « ${p.name} »`, 422, "PACKAGING_INVALID");
+      if (!opt.isAvailable) throw new AppError(`Le packaging « ${opt.name} » n'est plus disponible pour « ${p.name} »`, 422, "PACKAGING_UNAVAILABLE");
+      packaging = { id: String(opt._id), name: opt.name, description: opt.description || undefined, supplement: opt.price };
+    }
+    const basePrice = effectivePrice(p);
+    return { product: p, quantity: l.quantity, variant: l.variant, basePrice, packaging, price: finalUnitPrice(basePrice, packaging?.supplement) };
   });
 
   // Le stock est partagé entre variantes d'un même produit.
@@ -118,7 +128,9 @@ export async function createOrder(input: CheckoutInput, userId: string | null) {
         name: l.product.name,
         sku: l.product.sku,
         image: imageForVariantString(l.product.variants, l.variant) ?? l.product.images[0], // photo de la couleur commandée
-        price: l.price,
+        price: l.price, // prix unitaire FINAL (produit + packaging), figé
+        basePrice: l.basePrice,
+        packaging: l.packaging,
         quantity: l.quantity,
         variant: l.variant,
       })),

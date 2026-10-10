@@ -5,8 +5,20 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { ApiError, fetcher } from "@/lib/client/fetcher";
 import { useUser, type ClientUser } from "@/stores/user";
+import { GoogleIcon } from "@/components/ui/GoogleIcon";
 
-export function AuthForm({ mode, welcomeDiscount }: { mode: "login" | "register"; welcomeDiscount: number }) {
+const GOOGLE_ERRORS: Record<string, string> = {
+  cancelled: "Connexion Google annulée.",
+  failed: "La connexion avec Google a échoué. Réessayez, ou utilisez votre email et votre mot de passe.",
+  unverified: "L’adresse email de ce compte Google n’est pas vérifiée.",
+  admin: "Les comptes administrateur se connectent avec leur mot de passe.",
+  disabled_account: "Ce compte est désactivé.",
+  limit: "Trop de tentatives ou d’inscriptions depuis cette adresse. Réessayez dans quelques minutes.",
+  disabled: "La connexion avec Google n’est pas disponible pour le moment.",
+  unconfigured: "Google n’est pas encore configuré : ajoutez GOOGLE_CLIENT_ID et GOOGLE_CLIENT_SECRET dans .env.local, puis relancez le site (voir le README).",
+};
+
+export function AuthForm({ mode, welcomeDiscount, google = false }: { mode: "login" | "register"; welcomeDiscount: number; google?: boolean }) {
   const router = useRouter();
   const sp = useSearchParams();
   const setUser = useUser((s) => s.set);
@@ -16,6 +28,8 @@ export function AuthForm({ mode, welcomeDiscount }: { mode: "login" | "register"
   const register = mode === "register";
   const rawNext = sp.get("next") ?? "/";
   const next = rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : "/"; // anti open-redirect
+
+  const googleError = GOOGLE_ERRORS[sp.get("google") ?? ""];
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,6 +65,15 @@ export function AuthForm({ mode, welcomeDiscount }: { mode: "login" | "register"
           <h1 className="h-display text-3xl">{register ? "Créer un compte" : "Connexion"}</h1>
           {register && welcomeDiscount > 0 && <p className="mt-2 rounded-lg bg-brass/10 px-3 py-2 text-sm text-brass-dark">🎁 Recevez immédiatement un code de <strong>-{welcomeDiscount}%</strong> sur votre première commande.</p>}
         </div>
+        {googleError && <p role="alert" className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">{googleError}</p>}
+        {google && (
+          <>
+            <a href={`/api/auth/google/start?next=${encodeURIComponent(next)}`} className="btn-outline w-full !justify-center gap-3 !border-ink/25 !py-3.5 !text-base">
+              <GoogleIcon /> Continuer avec Google
+            </a>
+            <div className="flex items-center gap-3 text-xs uppercase tracking-widest text-ink/50"><span className="h-px flex-1 bg-ink/15" />ou avec votre email<span className="h-px flex-1 bg-ink/15" /></div>
+          </>
+        )}
         {register && input("name", "Nom complet", { required: true, autoComplete: "name" })}
         {input("email", "Email", { type: "email", required: true, autoComplete: "email" })}
         {register && input("phone", "Téléphone (optionnel)", { type: "tel", autoComplete: "tel", inputMode: "tel", placeholder: "20 123 456" })}

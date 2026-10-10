@@ -1,9 +1,11 @@
 /** Fusion de deux paniers (celui du navigateur et celui du compte). Fichier pur : navigateur + serveur. */
-export type CartRef = { productId: string; quantity: number; variant?: string };
+import { cartKey } from "./packaging";
+
+export type CartRef = { productId: string; quantity: number; variant?: string; packagingId?: string };
 
 const MAX_LINES = 50;
 const MAX_QTY = 50;
-export const refKey = (r: Pick<CartRef, "productId" | "variant">) => `${r.productId}|${r.variant ?? ""}`;
+export const refKey = (r: Pick<CartRef, "productId" | "variant" | "packagingId">) => cartKey(r.productId, r.variant, r.packagingId);
 
 /**
  * Même article des deux côtés → on garde la PLUS GRANDE quantité (jamais la somme : si le panier a déjà été synchronisé,

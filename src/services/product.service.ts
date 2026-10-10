@@ -5,6 +5,7 @@ import { Product } from "@/models/Product";
 import { Category } from "@/models/Category";
 import { productListQuery } from "@/validation/schemas";
 import { escapeRegex, plain, withPrice } from "@/lib/utils";
+import { publicProduct } from "@/lib/packaging";
 
 type Query = z.infer<typeof productListQuery>;
 
@@ -47,7 +48,7 @@ export async function listProducts(q: Query, opts: { includeInactive?: boolean }
     Product.find(filter).sort(sort).skip((q.page - 1) * q.limit).limit(q.limit).populate("category", "name slug").lean(),
     Product.countDocuments(filter),
   ]);
-  return { items: plain(items).map(withPrice), total, page: q.page, pages: Math.max(1, Math.ceil(total / q.limit)) };
+  return { items: plain(items).map((p) => (opts.includeInactive ? withPrice(p) : publicProduct(withPrice(p)))), total, page: q.page, pages: Math.max(1, Math.ceil(total / q.limit)) };
 }
 
 /** SKU automatique « AP-XXXXXX », unique. Utilisé quand l'admin laisse le champ vide. */

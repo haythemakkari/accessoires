@@ -12,7 +12,7 @@ export function useQuote() {
   const [quote, setQuote] = useState<Quote | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const sig = JSON.stringify([lines.map((l) => [l.productId, l.quantity, l.variant]), couponCode]);
+  const sig = JSON.stringify([lines.map((l) => [l.productId, l.quantity, l.variant, l.packagingId]), couponCode]);
 
   useEffect(() => {
     if (lines.length === 0) { setQuote(null); setError(null); return; }
@@ -22,7 +22,7 @@ export function useQuote() {
       try {
         const q = await fetcher<Quote>("/api/cart/quote", {
           method: "POST",
-          body: { items: lines.map((l) => ({ productId: l.productId, quantity: l.quantity, variant: l.variant })), couponCode: couponCode ?? undefined },
+          body: { items: lines.map((l) => ({ productId: l.productId, quantity: l.quantity, variant: l.variant, packagingId: l.packagingId })), couponCode: couponCode ?? undefined },
         });
         if (!cancelled) { setQuote(q); setError(null); }
       } catch (e) {

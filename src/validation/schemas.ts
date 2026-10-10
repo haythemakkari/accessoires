@@ -40,6 +40,8 @@ export const cartItemSchema = z.object({
   productId: objectId,
   quantity: z.number().int().min(1, "Quantité invalide").max(50),
   variant: z.string().trim().max(200).optional(),
+  /** Option de packaging choisie (facultative) : le serveur vérifie qu'elle appartient au produit et qu'elle est disponible. */
+  packagingId: objectId.optional(),
 });
 
 /** Panier envoyé pour être mis à jour (public) ou enregistré sur le compte (connecté). */
@@ -68,6 +70,15 @@ export const checkoutSchema = z.object({
   couponCode: z.string().trim().max(40).optional().or(z.literal("").transform(() => undefined)),
 });
 
+const packagingInput = z.object({
+  id: objectId.optional(), // option existante (son identifiant est conservé : les paniers y font référence)
+  name: z.string().trim().min(1, "Nom du packaging requis").max(60, "60 caractères maximum"),
+  description: z.string().trim().max(200, "200 caractères maximum").default(""),
+  image: z.preprocess(emptyToUndefined, z.string().trim().max(500).regex(/^(\/uploads\/[\w.\-]+|https?:\/\/\S+)$/i, "Lien d'image invalide").optional()),
+  price: z.number("Supplément invalide").min(0, "Supplément minimum 0 DT").max(10000, "Supplément trop élevé"),
+  isAvailable: z.boolean().default(true),
+  isDefault: z.boolean().default(false),
+});
 export const productSchema = z
   .object({
     name: z.string().trim().min(2).max(200),
@@ -107,12 +118,26 @@ export const productSchema = z
       )
       .max(5)
       .default([]),
+    packagingEnabled: z.boolean().default(false),
+    packagings: z.array(packagingInput).max(10, "10 packagings maximum").default([]),
     isActive: z.boolean().default(true),
     isFeatured: z.boolean().default(false),
   })
   .refine((p) => !p.isOnSale || (p.salePrice != null && p.salePrice < p.price), {
     message: "Le prix promo doit être inférieur au prix",
     path: ["salePrice"],
+  })
+  .superRefine((p, ctx) => {
+    if (!p.packagingEnabled) return;
+    if (p.packagings.length === 0) ctx.addIssue({ code: "custom", path: ["packagings"], message: "Ajoutez au moins une option de packaging ou désactivez le packaging" });
+    const seen = new Set<string>();
+    p.packagings.forEach((o, i) => {
+      const k = o.name.toLowerCase();
+      if (seen.has(k)) ctx.addIssue({ code: "custom", path: ["packagings", i, "name"], message: `Deux options portent le même nom : « ${o.name} »` });
+      seen.add(k);
+      if (o.isDefault && !o.isAvailable) ctx.addIssue({ code: "custom", path: ["packagings", i, "isDefault"], message: "L'option par défaut doit être disponible" });
+    });
+    if (p.packagings.filter((o) => o.isDefault).length > 1) ctx.addIssue({ code: "custom", path: ["packagings"], message: "Une seule option par défaut" });
   });
 export const productPatchSchema = z.object({
   isActive: z.boolean().optional(),
