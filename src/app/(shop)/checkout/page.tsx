@@ -10,6 +10,7 @@ import { useQuote } from "@/lib/client/useQuote";
 import { ApiError, fetcher } from "@/lib/client/fetcher";
 import { formatPrice } from "@/lib/utils";
 import { GOVERNORATES } from "@/lib/tunisia";
+import { delegationsOf } from "@/lib/delegations";
 import { PHONE_ERROR, parseTunisianPhone } from "@/lib/phone";
 import { CouponBox } from "@/components/shop/CouponBox";
 import { Totals } from "@/components/shop/Totals";
@@ -17,6 +18,7 @@ import { ProductImage } from "@/components/ui/ProductImage";
 
 const STEPS = ["Vos informations", "Livraison", "Récapitulatif"];
 type Form = { fullName: string; phone: string; email: string; line: string; city: string; district: string; notes: string };
+const OTHER = "__autre__";
 const EMPTY: Form = { fullName: "", phone: "", email: "", line: "", city: "", district: "", notes: "" };
 
 export default function CheckoutPage() {
@@ -26,6 +28,7 @@ export default function CheckoutPage() {
   const { quote, error, loading } = useQuote();
   const [step, setStep] = useState(0);
   const [f, setF] = useState<Form>(EMPTY);
+  const [otherZone, setOtherZone] = useState(false); // « Autre » choisi : saisie libre de la zone
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -123,13 +126,23 @@ export default function CheckoutPage() {
               <div className="grid gap-5 sm:grid-cols-2">
                 <div>
                   <label className="label" htmlFor="city">Gouvernorat</label>
-                  <select id="city" value={f.city} onChange={(e) => setF({ ...f, city: e.target.value })} className={`input ${errors.city ? "!border-rose-400" : ""}`} autoComplete="address-level1">
+                  <select id="city" value={f.city} onChange={(e) => { setF({ ...f, city: e.target.value, district: "" }); setOtherZone(false); }} className={`input ${errors.city ? "!border-rose-400" : ""}`} autoComplete="address-level1">
                     <option value="">Choisir un gouvernorat…</option>
                     {GOVERNORATES.map((g) => <option key={g} value={g}>{g}</option>)}
                   </select>
                   {errors.city && <p className="mt-1 text-xs text-rose-600">{errors.city}</p>}
                 </div>
-                {field("district", "Ville / Délégation (optionnel)", { autoComplete: "address-level2", placeholder: "Ex. La Marsa" })}
+                <div>
+                  <label className="label" htmlFor="district">Ville / Délégation (optionnel)</label>
+                  {/* Sous-zones du gouvernorat choisi ; « Autre » permet de saisir une zone absente de la liste. */}
+                  <select id="district" value={otherZone ? OTHER : f.district} disabled={!f.city} autoComplete="address-level2"
+                    onChange={(e) => { if (e.target.value === OTHER) { setOtherZone(true); setF({ ...f, district: "" }); } else { setOtherZone(false); setF({ ...f, district: e.target.value }); } }} className="input disabled:cursor-not-allowed disabled:opacity-60">
+                    <option value="">{f.city ? "Choisir une zone…" : "Choisissez d’abord un gouvernorat"}</option>
+                    {delegationsOf(f.city).map((d) => <option key={d} value={d}>{d}</option>)}
+                    {f.city && <option value={OTHER}>Autre (à préciser)</option>}
+                  </select>
+                  {otherZone && <input id="district-other" aria-label="Votre ville ou délégation" autoFocus maxLength={80} value={f.district} onChange={set("district")} placeholder="Votre ville ou délégation" className="input mt-2" />}
+                </div>
               </div>
               {field("line", "Adresse", { autoComplete: "street-address" })}
               <div>

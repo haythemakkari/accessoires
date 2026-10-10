@@ -44,11 +44,9 @@ export function Footer({ siteName }: { siteName: string }) {
         <div className="container-x flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-center">
           <span className="hidden md:inline">© {new Date().getFullYear()} {siteName}. Tous droits réservés.</span>
           <span aria-hidden="true" className="hidden md:inline">·</span>
-          <Link href="/confidentialite" className="hidden transition hover:text-white md:inline">Confidentialité</Link>
-          <span aria-hidden="true" className="hidden md:inline">·</span>
           <span>
             Powered &amp; developed by{" "}
-            <a href="https://www.linkedin.com/in/haythem-akkari" target="_blank" rel="noopener noreferrer" className="font-medium text-brass-light underline-offset-4 transition hover:text-white hover:underline">Haythem Akkari</a>
+            <a href="https://reply.tn/" target="_blank" rel="noopener noreferrer" className="font-medium text-brass-light underline-offset-4 transition hover:text-white hover:underline">Reply</a>
           </span>
         </div>
       </div>

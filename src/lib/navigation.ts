@@ -32,6 +32,7 @@ export const SERVICE_LINKS = [
   { label: "Livraison", href: "/service-client/livraison" },
   { label: "Retours & Échanges", href: "/service-client/retours-echanges" },
   { label: "Suivi colis", href: "/service-client/suivi-commande" },
+  { label: "Confidentialité", href: "/confidentialite" },
 ];
 
 /** Réseaux sociaux affichés dans le pied de page. */

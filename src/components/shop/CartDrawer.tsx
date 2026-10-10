@@ -11,7 +11,8 @@ import { ProductImage } from "@/components/ui/ProductImage";
 import { CouponBox } from "@/components/shop/CouponBox";
 import { Totals } from "@/components/shop/Totals";
 import { useQuote } from "@/lib/client/useQuote";
-import { useQuickAddSimilar, useSimilar } from "@/lib/client/similar";
+import { canPickInline, useQuickAddSimilar, useQuickAddVariant, useSimilar } from "@/lib/client/similar";
+import { VariantPicker } from "./VariantPicker";
 
 /** Panneau « Mon panier » qui s'ouvre depuis la droite (rendu dans <body> : l'en-tête collant crée son propre repère pour les éléments fixes). */
 export function CartDrawer() {
@@ -134,6 +135,8 @@ function Suggestions() {
   const lines = useCart((s) => s.lines);
   const similar = useSimilar(lines[lines.length - 1]?.slug);
   const quickAdd = useQuickAddSimilar();
+  const quickAddVariant = useQuickAddVariant();
+  const [picking, setPicking] = useState<string | null>(null);
   const inCart = new Set(lines.map((l) => l.productId));
   const list = (similar ?? []).filter((p) => !inCart.has(p._id)).slice(0, 4);
   if (list.length === 0) return null;
@@ -142,16 +145,21 @@ function Suggestions() {
       <h3 className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-brass-dark"><ShoppingBag size={14} /> Complétez votre commande</h3>
       <ul className="divide-y divide-brass/20">
         {list.map((p) => (
-          <li key={p._id} className="flex items-center gap-3 py-3">
+          <li key={p._id} className="flex flex-wrap items-center gap-3 py-3">
             <Link href={`/products/${p.slug}`} onClick={() => useCartDrawer.getState().set(false)} className="h-16 w-14 shrink-0 overflow-hidden rounded-xl bg-white"><ProductImage src={p.image ?? undefined} alt={p.name} sizes="56px" /></Link>
             <div className="min-w-0 flex-1">
               <Link href={`/products/${p.slug}`} onClick={() => useCartDrawer.getState().set(false)} className="line-clamp-2 text-sm font-semibold">{p.name}</Link>
               <p className="mt-0.5 text-sm font-bold text-emerald-800">{formatPrice(p.currentPrice)}</p>
             </div>
-            {p.hasVariants ? (
+            {canPickInline(p) ? (
+              <button type="button" onClick={() => setPicking(picking === p._id ? null : p._id)} aria-expanded={picking === p._id} className="flex shrink-0 items-center gap-1 rounded-full border border-ink/40 bg-white px-3.5 py-2 text-sm font-semibold">Choisir <ChevronDown size={14} className={`transition ${picking === p._id ? "rotate-180" : ""}`} /></button>
+            ) : p.hasVariants ? (
               <Link href={`/products/${p.slug}`} onClick={() => useCartDrawer.getState().set(false)} className="flex shrink-0 items-center gap-1 rounded-full border border-ink/40 bg-white px-3.5 py-2 text-sm font-semibold">Choisir <ChevronDown size={14} /></Link>
             ) : (
               <button type="button" onClick={() => quickAdd(p)} aria-label={`Ajouter au panier : ${p.name}`} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-ink text-sand-50 active:scale-95"><Plus size={18} /></button>
+            )}
+            {picking === p._id && canPickInline(p) && (
+              <VariantPicker className="basis-full" variants={p.variants} onClose={() => setPicking(null)} onPick={(v) => { quickAddVariant(p, v); setPicking(null); }} />
             )}
           </li>
         ))}
