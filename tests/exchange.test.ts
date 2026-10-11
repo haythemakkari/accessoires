@@ -68,12 +68,17 @@ describe("demande d'échange : création", () => {
     await mkOrder("NM-261010-EEEEEE", bob);
     await expect(createExchangeRequest({ ...base, orderNumber: "NM-261010-EEEEEE" }, { userId: alice, ip: "x" })).rejects.toMatchObject({ code: "ORDER_NOT_FOUND" });
   });
-  it("une seule demande en cours par commande ; une demande clôturée permet d'en refaire une", async () => {
+  it("une seule demande par commande, même après sa clôture", async () => {
     await mkOrder("NM-261010-FFFFFF", alice);
     const first = await createExchangeRequest({ ...base, orderNumber: "NM-261010-FFFFFF" }, { userId: alice, ip: "x" });
     await expect(createExchangeRequest({ ...base, orderNumber: "NM-261010-FFFFFF" }, { userId: alice, ip: "x" })).rejects.toMatchObject({ code: "EXCHANGE_EXISTS" });
     await Message.updateOne({ _id: first._id }, { status: "closed" });
-    await expect(createExchangeRequest({ ...base, orderNumber: "NM-261010-FFFFFF" }, { userId: alice, ip: "x" })).resolves.toBeTruthy();
+    await expect(createExchangeRequest({ ...base, orderNumber: "NM-261010-FFFFFF" }, { userId: alice, ip: "x" })).rejects.toMatchObject({ code: "EXCHANGE_EXISTS" });
+    // un invité ne peut pas non plus contourner la règle avec le même numéro
+    await expect(createExchangeRequest({ ...base, orderNumber: "NM-261010-FFFFFF" }, { userId: null, ip: "x" })).rejects.toMatchObject({ code: "EXCHANGE_EXISTS" });
+    // une autre commande reste possible
+    await mkOrder("NM-261010-FFFFF2", alice);
+    await expect(createExchangeRequest({ ...base, orderNumber: "NM-261010-FFFFF2" }, { userId: alice, ip: "x" })).resolves.toBeTruthy();
   });
 });
 

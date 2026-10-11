@@ -26,7 +26,12 @@ export function ContactForm({ kind = "contact" }: { kind?: "contact" | "exchange
   useEffect(() => {
     if (!user || user.role !== "customer") return;
     setV((x) => ({ ...x, name: x.name || user.name, email: x.email || user.email, phone: x.phone || user.phone || "" }));
-    if (exchange) fetcher<MyOrder[]>("/api/orders").then((l) => setOrders(l.filter((o) => isExchangeable(o)))).catch(() => setOrders([]));
+    if (exchange) {
+      // Commandes livrées depuis moins de 7 jours, et qui n'ont pas déjà fait l'objet d'une demande (une seule par commande).
+      Promise.all([fetcher<MyOrder[]>("/api/orders"), fetcher<{ items: { orderNumber: string }[] }>("/api/account/exchanges")])
+        .then(([l, ex]) => { const used = new Set(ex.items.map((i) => i.orderNumber)); setOrders(l.filter((o) => isExchangeable(o) && !used.has(o.orderNumber))); })
+        .catch(() => setOrders([]));
+    }
   }, [user, exchange]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
@@ -106,9 +111,9 @@ export function ContactForm({ kind = "contact" }: { kind?: "contact" | "exchange
         ) : field("orderNumber", exchange ? "N° de commande" : "N° de commande (optionnel)", { placeholder: "NM-261006-ABC123", className: `input uppercase ${errors.orderNumber ? "!border-rose-400" : ""}`, required: exchange })}
       </div>
       {exchange && member && orders && orders.length === 0 && (
-        <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-900">Aucune de vos commandes n’a été livrée ces {EXCHANGE_WINDOW_DAYS} derniers jours : l’échange n’est pas possible pour le moment. Une question ? <Link href="/contact" className="font-medium underline underline-offset-4">Écrivez-nous</Link>.</p>
+        <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-900">Aucune commande n’est échangeable : il faut qu’elle ait été livrée il y a moins de {EXCHANGE_WINDOW_DAYS} jours et qu’elle n’ait pas déjà fait l’objet d’une demande. Une question ? <Link href="/contact" className="font-medium underline underline-offset-4">Écrivez-nous</Link>.</p>
       )}
-      {exchange && member && orders && orders.length > 0 && <p className="-mt-2 text-xs text-ink/60">Seules vos commandes livrées depuis moins de {EXCHANGE_WINDOW_DAYS} jours sont proposées.</p>}
+      {exchange && member && orders && orders.length > 0 && <p className="-mt-2 text-xs text-ink/60">Seules vos commandes livrées depuis moins de {EXCHANGE_WINDOW_DAYS} jours sont proposées. Une seule demande d’échange est possible par commande.</p>}
       <div>
         <label className="label" htmlFor="c-message">Message</label>
         <textarea id="c-message" rows={4} placeholder={exchange ? "Quel article souhaitez-vous échanger, et contre quoi (autre taille, autre modèle…) ? Précisez le motif si l’article est défectueux." : undefined} value={v.message} onChange={set("message")} className={`input ${errors.message ? "!border-rose-400" : ""}`} maxLength={2000} />

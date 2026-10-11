@@ -83,7 +83,7 @@ export function ExchangeRequests() {
                         <textarea id={`rep-${x.id}`} rows={3} maxLength={2000} className="input" placeholder="Répondre à l’équipe…" value={draft[x.id] ?? ""} onChange={(e) => setDraft((d) => ({ ...d, [x.id]: e.target.value }))} />
                         <button type="button" onClick={() => send(x)} disabled={sending === x.id} className="btn-primary mt-2 !py-2.5"><Send size={15} /> {sending === x.id ? "Envoi…" : "Envoyer"}</button>
                       </div>
-                    ) : <p className="rounded-xl bg-white px-3 py-2 text-xs text-ink/60">Cette demande est clôturée. Besoin d’un autre échange ? <Link href="/service-client/demande-echange" className="underline underline-offset-4">Faire une nouvelle demande</Link>.</p>}
+                    ) : <p className="rounded-xl bg-white px-3 py-2 text-xs text-ink/60">Cette demande est clôturée. Une seule demande d’échange est possible par commande : pour une autre question, <Link href="/contact" className="underline underline-offset-4">écrivez-nous</Link>.</p>}
                   </div>
                 )}
               </li>

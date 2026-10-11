@@ -7,7 +7,7 @@ import { EXCHANGE_MAX_REPLIES, EXCHANGE_WINDOW_DAYS, deliveredAt, isWithinExchan
 type NewExchange = { name: string; phone?: string; email?: string; subject: string; message: string; orderNumber?: string };
 
 /**
- * Crée une demande d'échange. La commande doit exister et ne pas être annulée ; une seule demande en cours par commande.
+ * Crée une demande d'échange. La commande doit exister, être livrée depuis 7 jours au plus, et ne pas avoir déjà fait l'objet d'une demande (une seule par commande).
  * Le client connecté la retrouvera dans « Mon compte » ; une commande d'un AUTRE compte est refusée.
  */
 export async function createExchangeRequest(data: NewExchange, ctx: { userId: string | null; ip: string }) {
@@ -23,8 +23,9 @@ export async function createExchangeRequest(data: NewExchange, ctx: { userId: st
   if (!isWithinExchangeWindow(delivered)) {
     throw new AppError(`Le délai de ${EXCHANGE_WINDOW_DAYS} jours après la livraison est dépassé pour cette commande`, 422, "EXCHANGE_WINDOW");
   }
-  if (await Message.exists({ kind: "exchange", orderNumber, status: { $ne: "closed" } })) {
-    throw new AppError("Une demande d'échange est déjà en cours pour cette commande", 409, "EXCHANGE_EXISTS");
+  // Une seule demande d'échange par commande, quel que soit son état (même clôturée).
+  if (await Message.exists({ kind: "exchange", orderNumber })) {
+    throw new AppError("Une demande d'échange a déjà été faite pour cette commande : une seule demande est possible par commande", 409, "EXCHANGE_EXISTS");
   }
   return Message.create({ ...data, orderNumber, kind: "exchange", status: "open", order: order._id, user: ctx.userId ? new Types.ObjectId(ctx.userId) : undefined, ip: ctx.ip });
 }
@@ -56,7 +57,7 @@ export async function markExchangeSeen(userId: string, id: string) {
 export async function addCustomerReply(userId: string, id: string, text: string) {
   const m = await Message.findOne({ _id: id, kind: "exchange", user: userId }).select("status replies");
   if (!m) throw notFound();
-  if (m.status === "closed") throw new AppError("Cette demande est clôturée : faites une nouvelle demande d'échange si besoin", 409, "EXCHANGE_CLOSED");
+  if (m.status === "closed") throw new AppError("Cette demande est clôturée : pour une autre question, écrivez-nous via la page Contact", 409, "EXCHANGE_CLOSED");
   if (m.replies.length >= EXCHANGE_MAX_REPLIES) throw new AppError("Cette conversation est trop longue : contactez-nous par téléphone", 409, "EXCHANGE_FULL");
   return Message.findOneAndUpdate(
     { _id: id, kind: "exchange", user: userId, status: { $ne: "closed" } },

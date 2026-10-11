@@ -30,7 +30,7 @@ export default function DemandeEchangePage() {
           <p className="flex gap-3"><Clock size={18} className="mt-0.5 shrink-0 text-brass-dark" /><span>Commande <strong className="text-ink">livrée depuis moins de 7 jours</strong> (date confirmée par notre équipe).</span></p>
           <p className="flex gap-3"><ShieldCheck size={18} className="mt-0.5 shrink-0 text-brass-dark" /><span>Article <strong className="text-ink">neuf, non porté</strong>, dans son emballage d’origine.</span></p>
           <p className="flex gap-3"><MessageSquareText size={18} className="mt-0.5 shrink-0 text-brass-dark" /><span>Ne renvoyez rien avant notre <strong className="text-ink">accord</strong> : nous vous indiquons la marche à suivre.</span></p>
-          <p className="flex gap-3"><Info size={18} className="mt-0.5 shrink-0 text-brass-dark" /><span>Connecté, vous choisissez directement votre commande dans la liste. Sinon, saisissez son numéro (<span className="font-mono">NM-AAMMJJ-XXXXXX</span>).</span></p>
+          <p className="flex gap-3"><Info size={18} className="mt-0.5 shrink-0 text-brass-dark" /><span><strong className="text-ink">Une seule demande</strong> est possible par commande. Connecté, vous choisissez votre commande dans la liste ; sinon, saisissez son numéro (<span className="font-mono">NM-AAMMJJ-XXXXXX</span>).</span></p>
           <Link href="/service-client/retours-echanges" className="inline-block font-medium text-ink underline underline-offset-4">Lire la politique complète</Link>
         </aside>
       </div>
