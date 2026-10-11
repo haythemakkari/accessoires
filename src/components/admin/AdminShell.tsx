@@ -1,8 +1,8 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
-import { ImageIcon, LayoutDashboard, LogOut, Mail, Menu, Package, ShoppingCart, Settings, Tags, TicketPercent, Users, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ImageIcon, LayoutDashboard, LogOut, Mail, Menu, Package, RefreshCcw, ShoppingCart, Settings, Tags, TicketPercent, Users, X } from "lucide-react";
 import { fetcher } from "@/lib/client/fetcher";
 import { NotificationBell } from "./NotificationBell";
 
@@ -14,6 +14,7 @@ const NAV = [
   { href: "/admin/customers", l: "Clients", i: Users },
   { href: "/admin/coupons", l: "Coupons", i: TicketPercent },
   { href: "/admin/messages", l: "Messages", i: Mail },
+  { href: "/admin/exchanges", l: "Demandes d'échange", i: RefreshCcw },
   { href: "/admin/homepage", l: "Page d'accueil", i: ImageIcon },
   { href: "/admin/settings", l: "Paramètres", i: Settings },
 ];
@@ -22,6 +23,9 @@ export function AdminShell({ name, children }: { name: string; children: React.R
   const path = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  // Pastille sur « Demandes d'échange » : nombre de demandes à traiter (rafraîchi à chaque changement de page).
+  const [exchangesOpen, setExchangesOpen] = useState(0);
+  useEffect(() => { fetcher<{ open: number }>("/api/admin/exchanges?limit=1").then((r) => setExchangesOpen(r.open)).catch(() => {}); }, [path]);
   const active = (h: string) => (h === "/admin" ? path === h : path.startsWith(h));
 
   const sidebar = (
@@ -31,6 +35,7 @@ export function AdminShell({ name, children }: { name: string; children: React.R
         {NAV.map(({ href, l, i: Icon }) => (
           <Link key={href} href={href} onClick={() => setOpen(false)} className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition ${active(href) ? "bg-indigo-600 text-white" : "hover:bg-slate-800"}`}>
             <Icon size={18} /> {l}
+            {href === "/admin/exchanges" && exchangesOpen > 0 && <span className="ml-auto rounded-full bg-amber-500 px-2 py-0.5 text-xs font-semibold text-white">{exchangesOpen}</span>}
           </Link>
         ))}
       </div>

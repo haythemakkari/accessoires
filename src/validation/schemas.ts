@@ -242,8 +242,14 @@ export const contactMessageSchema = z
     message: z.string().trim().min(10, "Message trop court (10 caractères minimum)").max(2000, "2000 caractères maximum"),
     orderNumber: z.preprocess(emptyToUndefined, z.string().trim().toUpperCase().regex(/^NM-\d{6}-[A-F0-9]{6}$/, "Numéro de commande invalide").optional()),
     website: z.string().max(0, "Requête invalide").optional(), // champ piège anti-robots : doit rester vide
+    /** « exchange » : demande d'échange (numéro de commande obligatoire, suivie dans le compte du client). */
+    kind: z.enum(["contact", "exchange"]).default("contact"),
   })
-  .refine((m) => m.phone || m.email, { message: "Indiquez un téléphone ou un email pour que nous puissions vous répondre", path: ["phone"] });
+  .refine((m) => m.phone || m.email, { message: "Indiquez un téléphone ou un email pour que nous puissions vous répondre", path: ["phone"] })
+  .refine((m) => m.kind !== "exchange" || !!m.orderNumber, { message: "Le numéro de commande est obligatoire pour une demande d'échange", path: ["orderNumber"] });
+
+export const exchangeReplySchema = z.object({ text: z.string().trim().min(2, "Message trop court").max(2000, "2000 caractères maximum") });
+export const exchangePatchSchema = z.object({ status: z.enum(["open", "answered", "closed"]).optional(), isRead: z.boolean().optional() }).refine((v) => v.status !== undefined || v.isRead !== undefined, { message: "Rien à modifier" });
 
 export const orderStatusSchema = z.object({ status: z.enum(ORDER_STATUSES) });
 

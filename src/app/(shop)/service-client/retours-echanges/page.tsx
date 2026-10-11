@@ -6,7 +6,7 @@ import { getShopSettings } from "@/lib/data";
 
 export const metadata: Metadata = {
   title: "Retours & Échanges",
-  description: "Retours et échanges sous 7 jours à compter de la réception : conditions, marche à suivre, remboursement et articles non repris chez Accessoires Plus.",
+  description: "Retours et échanges sous 7 jours à compter de la livraison : conditions, marche à suivre, remboursement et articles non repris chez Accessoires Plus.",
   alternates: { canonical: "/service-client/retours-echanges" },
 };
 
@@ -58,18 +58,18 @@ export default async function RetoursPage() {
           <p className="eyebrow">Aide · Retours &amp; échanges</p>
           <h1 className="h-display mt-3 text-4xl sm:text-5xl">Retours &amp; Échanges</h1>
           <p className="mt-4 max-w-xl text-lg leading-relaxed text-ink/65">
-            Un accessoire ne vous convient pas ? Vous avez <strong className="text-ink">7 jours</strong> à compter de la réception pour nous le retourner ou l’échanger. Un article défectueux ou une erreur de notre part est entièrement pris en charge.
+            Un accessoire ne vous convient pas ? Vous avez <strong className="text-ink">7 jours</strong> à compter de la livraison pour nous le retourner ou l’échanger. Un article défectueux ou une erreur de notre part est entièrement pris en charge.
           </p>
         </div>
         <aside className="rounded-3xl border border-brass/25 bg-sand-100/70 p-6" aria-label="L'essentiel">
           <p className="eyebrow !text-brass-dark">L’essentiel</p>
           <ul className="mt-4 space-y-3 text-sm">
-            <li className="flex items-center gap-3"><Icon><Clock size={18} /></Icon><span><strong>7 jours</strong> pour échanger, à compter de la réception</span></li>
+            <li className="flex items-center gap-3"><Icon><Clock size={18} /></Icon><span><strong>7 jours</strong> pour échanger, à compter de la livraison</span></li>
             <li className="flex items-center gap-3"><Icon><Package size={18} /></Icon><span><strong>Par envoi</strong> : après accord du service client</span></li>
             <li className="flex items-center gap-3"><Icon><ShieldCheck size={18} /></Icon><span><strong>Défectueux ou erreur</strong> : pris en charge</span></li>
             <li className="flex items-center gap-3"><Icon><Banknote size={18} /></Icon><span><strong>Remboursement</strong> sous 5 jours ouvrés</span></li>
           </ul>
-          <Link href="/contact" className="btn-primary mt-5 w-full">Demander un échange <ArrowRight size={16} /></Link>
+          <Link href="/service-client/demande-echange" className="btn-primary mt-5 w-full">Demander un échange <ArrowRight size={16} /></Link>
         </aside>
       </header>
 
@@ -78,9 +78,9 @@ export default async function RetoursPage() {
       <div className="grid gap-10 lg:grid-cols-[200px_minmax(0,1fr)] lg:gap-14">
         <OnThisPage items={SECTIONS} />
         <div className="min-w-0 max-w-3xl space-y-14">
-          <Section id="delai" title="Délai d’échange" lead="7 jours calendaires à compter de la réception de votre colis.">
+          <Section id="delai" title="Délai d’échange" lead="7 jours calendaires à compter de la livraison de votre commande.">
             <div className="grid gap-4 sm:grid-cols-2">
-              <Card icon={<ShoppingBag size={18} />} title="À partir de la réception">Le délai de 7 jours commence le jour où vous recevez votre commande, et non le jour où vous la passez.</Card>
+              <Card icon={<ShoppingBag size={18} />} title="À partir de la livraison">Le délai de 7 jours commence quand votre commande est marquée « livrée » par notre équipe, et non le jour où vous la passez.</Card>
               <Card icon={<Check size={18} />} title="Sans justification">Vous n’avez pas à expliquer votre choix : un article qui ne vous convient pas peut être retourné ou échangé.</Card>
             </div>
           </Section>

@@ -6,6 +6,7 @@ import { formatDate, formatPrice, plain } from "@/lib/utils";
 import { Order } from "@/models/Order";
 import { Coupon } from "@/models/Coupon";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { ExchangeRequests } from "@/components/shop/ExchangeRequests";
 
 export const metadata = { title: "Mon compte", robots: { index: false } };
 
@@ -48,6 +49,7 @@ export default async function AccountDashboard() {
           </ul>
         )}
       </section>
+      <ExchangeRequests />
     </div>
   );
 }

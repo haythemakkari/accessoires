@@ -11,11 +11,12 @@ const query = z.object({ unread: z.enum(["true"]).optional(), page: z.coerce.num
 export const GET = api(async (req) => {
   await requireAdmin();
   const q = parseQuery(req, query);
-  const filter = q.unread ? { isRead: false } : {};
+  // Les demandes d'échange ont leur propre page : elles ne figurent pas ici.
+  const filter = { kind: { $ne: "exchange" as const }, ...(q.unread ? { isRead: false } : {}) };
   const [items, total, unread] = await Promise.all([
     Message.find(filter).sort({ createdAt: -1 }).skip((q.page - 1) * q.limit).limit(q.limit).lean(),
     Message.countDocuments(filter),
-    Message.countDocuments({ isRead: false }),
+    Message.countDocuments({ kind: { $ne: "exchange" }, isRead: false }),
   ]);
   return { items: plain(items), total, unread, page: q.page, pages: Math.max(1, Math.ceil(total / q.limit)) };
 });
@@ -25,7 +26,7 @@ export const DELETE = api(async (req) => {
   assertSameOrigin(req);
   await requireAdmin();
   const { ids } = await parseBody(req, messageBulkSchema);
-  const res = await Message.deleteMany({ _id: { $in: [...new Set(ids)] } });
+  const res = await Message.deleteMany({ kind: { $ne: "exchange" }, _id: { $in: [...new Set(ids)] } });
   return { ok: true, deleted: res.deletedCount };
 });
 
@@ -35,6 +36,6 @@ export const PATCH = api(async (req) => {
   await requireAdmin();
   const { ids, isRead } = await parseBody(req, messageBulkSchema);
   if (typeof isRead !== "boolean") throw new AppError("isRead booléen requis");
-  const res = await Message.updateMany({ _id: { $in: [...new Set(ids)] } }, { isRead });
+  const res = await Message.updateMany({ kind: { $ne: "exchange" }, _id: { $in: [...new Set(ids)] } }, { isRead });
   return { ok: true, updated: res.modifiedCount };
 });

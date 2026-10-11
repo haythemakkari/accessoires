@@ -15,7 +15,7 @@ export default async function FaqPage() {
     ["Comment puis-je payer ?", "Le paiement se fait en espèces à la livraison, à la réception de votre commande."],
     ["Quels sont les frais de livraison ?", `${formatPrice(s.shippingFee)} par commande${s.freeShippingThreshold > 0 ? `, et la livraison est offerte dès ${formatPrice(s.freeShippingThreshold)} d'achat` : ""}.`],
     ["Comment suivre ma commande ?", "Avec votre numéro de commande et votre numéro de téléphone, depuis la page « Suivi colis » (lien en bas de page). Si vous avez un compte, toutes vos commandes sont aussi dans « Mes commandes »."],
-    ["Puis-je retourner un article ?", "Oui : vous disposez de 7 jours à compter de la réception pour retourner un article qui ne vous convient pas, sans justification. Les conditions détaillées sont dans la page « Retours & Échanges »."],
+    ["Puis-je retourner un article ?", "Oui : vous disposez de 7 jours à compter de la livraison pour retourner un article qui ne vous convient pas, sans justification. Les conditions détaillées sont dans la page « Retours & Échanges »."],
     ["Puis-je modifier ou annuler ma commande ?", "Tant qu'elle n'est pas expédiée, contactez-nous en indiquant votre numéro de commande."],
   ];
   return (
