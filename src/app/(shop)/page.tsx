@@ -79,8 +79,8 @@ export default async function HomePage() {
         </div>
       </div>
 
-      {home.featured.length > 0 && <Section eyebrow="Sélection" title="Nos coups de cœur" href="/products?featured=true"><ProductGrid products={home.featured.slice(0, 4)} /></Section>}
-      {home.latest.length > 0 && <Section eyebrow="Just in" title="Nouveautés" href="/products?sort=newest"><ProductGrid products={home.latest.slice(0, 4)} /></Section>}
+      {home.featured.length > 0 && <Section eyebrow="Sélection" title="Nos coups de cœur" href="/products?featured=true"><ProductGrid products={home.featured} swipe desktopLimit={4} moreHref="/products?featured=true" /></Section>}
+      {home.latest.length > 0 && <Section eyebrow="Just in" title="Nouveautés" href="/products?sort=newest"><ProductGrid products={home.latest} swipe desktopLimit={4} moreHref="/products?sort=newest" /></Section>}
 
       {/* PROMO CTA (masquée si l'offre de bienvenue est désactivée) */}
       {settings.welcomeDiscountPercent > 0 && (
@@ -98,7 +98,8 @@ export default async function HomePage() {
       </section>
       )}
 
-      {home.sale.length > 0 && <Section eyebrow="Offres" title="En promotion" href="/promotions"><ProductGrid products={home.sale} /></Section>}
+      {/* Promos en cours d'abord, puis celles qui démarrent bientôt (avec leur compte à rebours) */}
+      {home.sale.length + home.upcoming.length > 0 && <Section eyebrow="Offres" title="En promotion" href="/promotions"><ProductGrid products={[...home.sale, ...home.upcoming]} promoSoon swipe desktopLimit={8} moreHref="/promotions" /></Section>}
 
       {/* AVANTAGES */}
       <section className="container-x mt-20 sm:mt-28">

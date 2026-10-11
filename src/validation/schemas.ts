@@ -88,6 +88,9 @@ export const productSchema = z
     compareAtPrice: z.number().min(0).nullish(),
     salePrice: z.number().min(0).nullish(),
     isOnSale: z.boolean().default(false),
+    /** Dates de la promotion (facultatives) : début et fin, avec l'heure. */
+    saleStartsAt: z.coerce.date().nullish(),
+    saleEndsAt: z.coerce.date().nullish(),
     category: objectId,
     gender: z.enum(GENDERS).default("unisex"),
     // Fichiers téléversés (/uploads/…) ou liens http(s) : rien d'autre (pas de javascript:, data:, chemins arbitraires).
@@ -128,6 +131,7 @@ export const productSchema = z
     message: "Le prix promo doit être inférieur au prix",
     path: ["salePrice"],
   })
+  .refine((p) => !p.saleStartsAt || !p.saleEndsAt || p.saleEndsAt > p.saleStartsAt, { message: "La fin de la promotion doit être après son début", path: ["saleEndsAt"] })
   .superRefine((p, ctx) => {
     if (!p.packagingEnabled) return;
     if (p.packagings.length === 0) ctx.addIssue({ code: "custom", path: ["packagings"], message: "Ajoutez au moins une option de packaging ou désactivez le packaging" });

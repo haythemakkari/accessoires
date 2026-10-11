@@ -4,7 +4,7 @@ import { connectDB } from "./db";
 import { plain, withPrice } from "./utils";
 import { Category } from "@/models/Category";
 import { Product } from "@/models/Product";
-import { listProducts } from "@/services/product.service";
+import { listProducts, upcomingSales } from "@/services/product.service";
 import { defaultSettings, getSettings } from "@/services/settings.service";
 import { productListQuery } from "@/validation/schemas";
 
@@ -12,7 +12,9 @@ export type CategoryDTO = { _id: string; name: string; slug: string; description
 export type ProductDTO = {
   _id: string; name: string; slug: string; description: string; price: number; compareAtPrice?: number; salePrice?: number; isOnSale: boolean;
   currentPrice: number; gender: "homme" | "femme" | "unisex"; images: string[]; stock: number; sku: string; isActive: boolean; isFeatured: boolean;
-  variants: { name: string; options: string[]; optionImages?: { option: string; image: string }[] }[]; packagingEnabled?: boolean; packagings?: PackagingOption[]; soldCount: number; category: { _id: string; name: string; slug: string } | null; createdAt: string; updatedAt: string;
+  variants: { name: string; options: string[]; optionImages?: { option: string; image: string }[] }[]; packagingEnabled?: boolean; packagings?: PackagingOption[];
+  /** Promotion programmée : `isOnSale` = promo en cours ; `saleEnabled` = interrupteur de l'admin ; `saleStatus` = none / scheduled / active / ended. */
+  saleStartsAt?: string | null; saleEndsAt?: string | null; saleEnabled?: boolean; saleStatus?: "none" | "scheduled" | "active" | "ended"; soldCount: number; category: { _id: string; name: string; slug: string } | null; createdAt: string; updatedAt: string;
 };
 
 const TAG = "catalog";
@@ -57,18 +59,21 @@ export const getHomeData = unstable_cache(
       async () => {
         await connectDB();
         const q = (o: object) => productListQuery.parse({ limit: 8, ...o });
-        const [featured, latest, sale] = await Promise.all([
+        const [featured, latest, sale, upcoming] = await Promise.all([
           listProducts(q({ featured: "true" })),
           listProducts(q({ sort: "newest" })),
           listProducts(q({ onSale: "true", limit: 4 })),
+          upcomingSales(4),
         ]);
         return {
           featured: featured.items as unknown as ProductDTO[],
           latest: latest.items as unknown as ProductDTO[],
           sale: sale.items as unknown as ProductDTO[],
+          /** Promotions qui démarrent bientôt : section « En promotion » de l'accueil, avec compte à rebours. */
+          upcoming: upcoming as unknown as ProductDTO[],
         };
       },
-      () => ({ featured: [] as ProductDTO[], latest: [] as ProductDTO[], sale: [] as ProductDTO[] }),
+      () => ({ featured: [] as ProductDTO[], latest: [] as ProductDTO[], sale: [] as ProductDTO[], upcoming: [] as ProductDTO[] }),
     ),
   ["home"],
   { revalidate: 60, tags: [TAG] },

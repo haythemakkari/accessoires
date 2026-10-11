@@ -1,4 +1,5 @@
 "use client";
+import { ProductImage } from "@/components/ui/ProductImage";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { CheckCircle2 } from "lucide-react";
@@ -28,7 +29,7 @@ export default function SuccessPage() {
       {snap && (
         <div className="card mt-8 p-6 text-left text-sm">
           <ul className="divide-y divide-ink/10">
-            {snap.lines.map((l) => <li key={l.key} className="flex justify-between py-2"><span>{l.quantity} × {l.name}{l.variant && ` (${l.variant})`}{l.packagingName && ` · ${l.packagingName}`}</span><span>{formatPrice(l.price * l.quantity)}</span></li>)}
+            {snap.lines.map((l) => <li key={l.key} className="flex items-center justify-between gap-3 py-2"><div className="flex min-w-0 items-center gap-3"><div className="h-14 w-12 shrink-0 overflow-hidden rounded-lg bg-sand-100"><ProductImage src={l.image} alt={l.name} sizes="48px" /></div><span className="min-w-0">{l.quantity} × {l.name}{l.variant && ` (${l.variant})`}{l.packagingName && ` · ${l.packagingName}`}</span></div><span className="shrink-0">{formatPrice(l.price * l.quantity)}</span></li>)}
           </ul>
           <div className="mt-3 space-y-1 border-t border-ink/10 pt-3">
             {snap.quote.discount > 0 && <div className="flex justify-between text-emerald-700"><span>Réduction</span><span>-{formatPrice(snap.quote.discount)}</span></div>}

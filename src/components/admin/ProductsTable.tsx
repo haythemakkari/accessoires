@@ -65,7 +65,7 @@ export function ProductsTable() {
                     </div>
                   </td>
                   <td className="px-4 py-2.5 text-slate-600">{p.category?.name}</td>
-                  <td className="px-4 py-2.5 tabular-nums">{p.isOnSale && p.salePrice != null ? <><span className="text-rose-600">{formatPrice(p.salePrice)}</span> <s className="text-xs text-slate-400">{formatPrice(p.price)}</s></> : formatPrice(p.price)}</td>
+                  <td className="px-4 py-2.5 tabular-nums">{p.isOnSale && p.salePrice != null ? <><span className="text-rose-600">{formatPrice(p.salePrice)}</span> <s className="text-xs text-slate-400">{formatPrice(p.price)}</s></> : formatPrice(p.price)}{p.saleStatus === "scheduled" && <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-800" title="Le prix promo s'appliquera au début de la promotion">Promo programmée</span>}{p.saleStatus === "ended" && <span className="ml-2 rounded-full bg-slate-200 px-2 py-0.5 text-[11px] font-medium text-slate-600">Promo terminée</span>}</td>
                   <td className="px-4 py-2.5">
                     <input type="number" min={0} defaultValue={p.stock} key={p.stock} className={`a-input !w-20 !py-1 ${p.stock === 0 ? "!border-rose-300 bg-rose-50" : ""}`}
                       onBlur={(e) => { const n = Math.max(0, Math.floor(Number(e.target.value))); if (n !== p.stock) patch(p, { stock: n }); }} aria-label="Stock" />

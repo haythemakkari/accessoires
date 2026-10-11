@@ -9,20 +9,41 @@ import { uploadImages } from "@/lib/client/upload";
 import type { CategoryDTO, ProductDTO } from "@/lib/data";
 import { mediaUrl } from "@/lib/media";
 import { PageHeader, Switch } from "./ui";
+import { saleStatus } from "@/lib/sale";
 import { VariantEditor, toVariantPayload, toVariantState, type VariantState } from "./VariantEditor";
 import { PackagingEditor, emptyPackaging, toPackagingPayload, toPackagingState, type PackagingForm } from "./PackagingEditor";
 import { STOCK_CHANGED_EVENT } from "./NotificationBell";
 
 type FormState = {
-  name: string; description: string; price: string; compareAtPrice: string; salePrice: string; isOnSale: boolean; category: string;
+  name: string; description: string; price: string; compareAtPrice: string; salePrice: string; isOnSale: boolean; saleStartsAt: string; saleEndsAt: string; category: string;
   gender: "homme" | "femme" | "unisex"; images: string[]; stock: string; sku: string; variants: VariantState[]; packaging: PackagingForm; isActive: boolean; isFeatured: boolean;
 };
 
-const blank: FormState = { name: "", description: "", price: "", compareAtPrice: "", salePrice: "", isOnSale: false, category: "", gender: "unisex", images: [], stock: "0", sku: "", variants: [], packaging: emptyPackaging(), isActive: true, isFeatured: false };
+const blank: FormState = { name: "", description: "", price: "", compareAtPrice: "", salePrice: "", isOnSale: false, saleStartsAt: "", saleEndsAt: "", category: "", gender: "unisex", images: [], stock: "0", sku: "", variants: [], packaging: emptyPackaging(), isActive: true, isFeatured: false };
+
+/** Date ISO (serveur) ⇄ valeur d'un champ « datetime-local » (heure locale de l'admin). */
+const toLocalInput = (iso?: string | null) => {
+  if (!iso) return "";
+  const d = new Date(iso);
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+};
+const fromLocalInput = (v: string) => (v ? new Date(v).toISOString() : null);
+
+/** Phrase d'aide : où en est la promotion d'après les dates saisies. */
+function saleHint(f: { price: string; salePrice: string; isOnSale: boolean; saleStartsAt: string; saleEndsAt: string }) {
+  const n = (v: string) => (v.trim() === "" ? null : Number(v.replace(",", ".")));
+  const status = saleStatus({ price: n(f.price) ?? 0, salePrice: n(f.salePrice), isOnSale: f.isOnSale, saleStartsAt: f.saleStartsAt ? new Date(f.saleStartsAt) : null, saleEndsAt: f.saleEndsAt ? new Date(f.saleEndsAt) : null });
+  const fmt = (v: string) => new Date(v).toLocaleString("fr-FR", { dateStyle: "long", timeStyle: "short" });
+  if (status === "scheduled") return `Programmée : le prix promo s’appliquera le ${fmt(f.saleStartsAt)}. D’ici là, le produit garde son prix normal partout, et s’affiche sur l’accueil (section « En promotion ») avec un compte à rebours.`;
+  if (status === "ended") return `Terminée depuis le ${fmt(f.saleEndsAt)} : le produit est revenu à son prix normal.`;
+  if (status === "active") return f.saleEndsAt ? `En cours : le prix promo s’arrêtera le ${fmt(f.saleEndsAt)}.` : "En cours, sans date de fin.";
+  return "Sans dates, la promotion s’applique tout de suite et sans fin. Renseignez aussi un prix promo inférieur au prix.";
+}
 
 const fromProduct = (p: ProductDTO): FormState => ({
   name: p.name, description: p.description, price: String(p.price), compareAtPrice: p.compareAtPrice != null ? String(p.compareAtPrice) : "", salePrice: p.salePrice != null ? String(p.salePrice) : "",
-  isOnSale: p.isOnSale, category: p.category?._id ?? String(p.category ?? ""), gender: p.gender, images: p.images, stock: String(p.stock), sku: p.sku,
+  isOnSale: p.saleEnabled ?? p.isOnSale, saleStartsAt: toLocalInput(p.saleStartsAt), saleEndsAt: toLocalInput(p.saleEndsAt), category: p.category?._id ?? String(p.category ?? ""), gender: p.gender, images: p.images, stock: String(p.stock), sku: p.sku,
   variants: toVariantState(p.variants), packaging: toPackagingState(p.packagingEnabled, p.packagings), isActive: p.isActive, isFeatured: p.isFeatured,
 });
 
@@ -55,6 +76,7 @@ export function ProductForm({ product }: { product?: ProductDTO }) {
     const num = (s: string) => (s.trim() === "" ? null : Number(s.replace(",", ".")));
     const body = {
       name: f.name, description: f.description, price: num(f.price) ?? 0, compareAtPrice: num(f.compareAtPrice), salePrice: num(f.salePrice), isOnSale: f.isOnSale,
+      saleStartsAt: f.isOnSale ? fromLocalInput(f.saleStartsAt) : null, saleEndsAt: f.isOnSale ? fromLocalInput(f.saleEndsAt) : null,
       category: f.category, gender: f.gender, images: f.images, stock: Math.floor(num(f.stock) ?? 0), sku: f.sku, isActive: f.isActive, isFeatured: f.isFeatured,
       variants: toVariantPayload(f.variants),
       ...toPackagingPayload(f.packaging),
@@ -136,6 +158,14 @@ export function ProductForm({ product }: { product?: ProductDTO }) {
             <div><label className="a-label">Ancien prix affiché barré (optionnel)</label><input className="a-input" inputMode="decimal" value={f.compareAtPrice} onChange={(e) => set("compareAtPrice", e.target.value)} /></div>
             <div className="flex items-center justify-between text-sm"><span>En promotion</span><Switch label="Promotion" checked={f.isOnSale} onChange={(v) => set("isOnSale", v)} /></div>
             {f.isOnSale && <div><label className="a-label">Prix promotionnel (DT)</label><input className="a-input" inputMode="decimal" value={f.salePrice} onChange={(e) => set("salePrice", e.target.value)} />{err("salePrice")}</div>}
+            {f.isOnSale && (
+              <div className="space-y-3 rounded-lg bg-slate-50 p-3">
+                <p className="text-xs font-medium text-slate-700">Période de la promotion <span className="font-normal text-slate-400">(facultatif)</span></p>
+                <div><label className="a-label" htmlFor="sale-start">Début (date et heure)</label><input id="sale-start" type="datetime-local" className="a-input" value={f.saleStartsAt} onChange={(e) => set("saleStartsAt", e.target.value)} />{err("saleStartsAt")}</div>
+                <div><label className="a-label" htmlFor="sale-end">Fin (date et heure)</label><input id="sale-end" type="datetime-local" className="a-input" min={f.saleStartsAt || undefined} value={f.saleEndsAt} onChange={(e) => set("saleEndsAt", e.target.value)} />{err("saleEndsAt")}</div>
+                <p className="text-xs text-slate-500">{saleHint(f)}</p>
+              </div>
+            )}
           </section>
         </div>
       </div>

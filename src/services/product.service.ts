@@ -9,6 +9,14 @@ import { publicProduct } from "@/lib/packaging";
 
 type Query = z.infer<typeof productListQuery>;
 
+/** Promo valide ET en cours à l'instant `now` : interrupteur actif, prix promo inférieur au prix, début passé (ou sans début), fin à venir (ou sans fin). */
+const SALE_PRICE_OK = { $expr: { $and: [{ $in: [{ $type: "$salePrice" }, ["double", "int", "long", "decimal"]] }, { $lt: ["$salePrice", "$price"] }] } };
+export const activeSaleClause = (now = new Date()) => ({
+  isOnSale: true as const,
+  ...SALE_PRICE_OK,
+  $and: [{ $or: [{ saleStartsAt: null }, { saleStartsAt: { $lte: now } }] }, { $or: [{ saleEndsAt: null }, { saleEndsAt: { $gt: now } }] }] as QueryFilter<any>[],
+});
+
 export async function listProducts(q: Query, opts: { includeInactive?: boolean } = {}) {
   const filter: QueryFilter<any> = {};
   if (!opts.includeInactive) filter.isActive = true;
@@ -33,7 +41,12 @@ export async function listProducts(q: Query, opts: { includeInactive?: boolean }
     filter.price = range;
   }
   if (q.inStock === "true") filter.stock = { $gt: 0 };
-  if (q.onSale === "true") filter.isOnSale = true;
+  if (q.onSale === "true") {
+    // Seules les promos EN COURS (pas celles programmées plus tard, ni terminées). `$and` est partagé avec la recherche : on ajoute sans l'écraser.
+    const { $and, ...rest } = activeSaleClause();
+    Object.assign(filter, rest);
+    filter.$and = [...((filter.$and as QueryFilter<any>[] | undefined) ?? []), ...$and];
+  }
   if (q.featured === "true") filter.isFeatured = true;
 
   const sorts: Record<Query["sort"], Record<string, 1 | -1>> = {
@@ -64,4 +77,11 @@ export async function uniqueSlug(base: string, excludeId?: string) {
   let slug = base || "produit";
   for (let i = 2; await Product.exists({ slug, ...(excludeId ? { _id: { $ne: excludeId } } : {}) }); i++) slug = `${base}-${i}`;
   return slug;
+}
+
+/** Promotions qui commencent plus tard (les plus proches d'abord) : affichées sur l'accueil avec un compte à rebours. */
+export async function upcomingSales(limit = 4, now = new Date()) {
+  const items = await Product.find({ isActive: true, isOnSale: true, saleStartsAt: { $gt: now }, ...SALE_PRICE_OK })
+    .sort({ saleStartsAt: 1 }).limit(limit).populate("category", "name slug").lean();
+  return plain(items).map((p) => publicProduct(withPrice(p)));
 }

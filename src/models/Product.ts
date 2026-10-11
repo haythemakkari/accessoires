@@ -1,3 +1,4 @@
+import { effectivePrice } from "@/lib/utils";
 import mongoose, { Schema, type InferSchemaType, type HydratedDocument } from "mongoose";
 
 export const GENDERS = ["homme", "femme", "unisex"] as const;
@@ -32,6 +33,9 @@ const productSchema = new Schema(
     /** Prix promotionnel, appliqué si isOnSale. */
     salePrice: { type: Number, min: 0 },
     isOnSale: { type: Boolean, default: false },
+    /** Promotion programmée (facultatif) : le prix promo ne s'applique qu'entre ces deux dates. Sans dates : tout de suite et sans fin. */
+    saleStartsAt: { type: Date, default: null },
+    saleEndsAt: { type: Date, default: null },
     category: { type: Schema.Types.ObjectId, ref: "Category", required: true },
     gender: { type: String, enum: GENDERS, default: "unisex" },
     images: { type: [String], default: [] },
@@ -57,7 +61,7 @@ productSchema.index({ isActive: 1, soldCount: -1 });
 productSchema.index({ isActive: 1, stock: 1 }); // alertes de stock bas
 
 productSchema.virtual("currentPrice").get(function () {
-  return this.isOnSale && this.salePrice != null && this.salePrice < this.price ? this.salePrice : this.price;
+  return effectivePrice(this);
 });
 productSchema.set("toJSON", { virtuals: true });
 productSchema.set("toObject", { virtuals: true });
