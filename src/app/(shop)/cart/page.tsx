@@ -7,6 +7,7 @@ import { useQuote } from "@/lib/client/useQuote";
 import { formatPrice } from "@/lib/utils";
 import { ProductImage } from "@/components/ui/ProductImage";
 import { CouponBox } from "@/components/shop/CouponBox";
+import { GiftBoxOption } from "@/components/shop/GiftBoxOption";
 import { Totals } from "@/components/shop/Totals";
 
 export default function CartPage() {
@@ -62,6 +63,7 @@ export default function CartPage() {
         <aside className="card h-fit space-y-5 p-6 lg:sticky lg:top-28">
           <h2 className="h-display text-xl">Récapitulatif</h2>
           <CouponBox />
+          <GiftBoxOption />
           {error && <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p>}
           <Totals quote={quote} loading={loading} />
           <Link href="/checkout" aria-disabled={!!error} className={`btn-primary w-full ${error ? "pointer-events-none opacity-50" : ""}`}>Passer la commande</Link>

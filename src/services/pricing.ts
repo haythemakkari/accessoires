@@ -26,7 +26,8 @@ export function computeShipping(subtotalAfterDiscount: number, s: SettingsData) 
   return s.shippingFee;
 }
 
-export function computeTotals(subtotal: number, discount: number, settings: SettingsData) {
+/** Totaux. La box cadeau s'ajoute au total, mais n'entre ni dans la réduction ni dans le seuil de livraison offerte. */
+export function computeTotals(subtotal: number, discount: number, settings: SettingsData, giftBoxFee = 0) {
   const shippingFee = computeShipping(subtotal - discount, settings);
-  return { subtotal: round2(subtotal), discount, shippingFee, total: round2(subtotal - discount + shippingFee) };
+  return { subtotal: round2(subtotal), discount, shippingFee, giftBoxFee: round2(giftBoxFee), total: round2(subtotal - discount + shippingFee + giftBoxFee) };
 }

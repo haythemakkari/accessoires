@@ -40,7 +40,7 @@ const Card = ({ icon, title, tone = "default", children }: { icon: React.ReactNo
 
 export default async function RetoursPage() {
   const s = await getShopSettings();
-  const digits = s.contactPhone.replace(/\D/g, "");
+  const digits = s.whatsappPhone.replace(/\D/g, ""); // bouton WhatsApp : seulement si l'admin a choisi un numéro WhatsApp
   const contact = [s.contactEmail && `par e-mail à ${s.contactEmail}`, s.contactPhone && `au ${s.contactPhone}`].filter(Boolean).join(" ou ");
 
   return (
@@ -152,7 +152,7 @@ export default async function RetoursPage() {
               {s.contactHours && <p className="mt-1 text-sm text-ink/65">Notre service client vous répond : {s.contactHours}</p>}
             </div>
             <div className="flex flex-wrap gap-2.5">
-              {digits && <a href={`https://wa.me/${digits}`} target="_blank" rel="noopener noreferrer" className="btn-primary !bg-emerald-700 hover:!bg-emerald-800"><MessageCircle size={16} /> WhatsApp {s.contactPhone}</a>}
+              {digits && <a href={`https://wa.me/${digits}`} target="_blank" rel="noopener noreferrer" className="btn-primary !bg-emerald-700 hover:!bg-emerald-800"><MessageCircle size={16} /> WhatsApp {s.whatsappPhone}</a>}
               <Link href="/contact" className="btn-outline"><FileText size={16} /> Nous écrire</Link>
               <Link href="/service-client/livraison" className="btn-outline"><Truck size={16} /> Livraison</Link>
             </div>

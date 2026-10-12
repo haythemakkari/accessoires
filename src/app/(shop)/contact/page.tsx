@@ -1,18 +1,24 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, Headset, Mail, MapPin, Smartphone, Truck } from "lucide-react";
+import { ArrowRight, Headset, Mail, MapPin, MessageCircle, Smartphone, Truck } from "lucide-react";
 import { ContactForm } from "@/components/shop/ContactForm";
 import { getShopSettings } from "@/lib/data";
 import { formatTunisianPhone } from "@/lib/phone";
+import { phoneDigits } from "@/lib/contact-phones";
 
 export const metadata: Metadata = { title: "Contact", description: "Une question sur une commande, un produit ou une livraison ? Contactez Accessoires Plus par téléphone, par e-mail ou avec notre formulaire : nous répondons dès que possible." };
 
-type Row = { icon: typeof Mail; label: string; value: string; note?: string; action?: { label: string; href: string } };
+type Row = { icon: typeof Mail; label: string; value?: string; /** Plusieurs numéros : un lien d'appel par numéro (le numéro WhatsApp porte une pastille). */ phones?: { text: string; href: string; whatsapp: boolean }[]; note?: string; action?: { label: string; href: string } };
 
 export default async function ContactPage() {
   const s = await getShopSettings();
   const rows = [
-    s.contactPhone && { icon: Smartphone, label: "Par téléphone", value: formatTunisianPhone(s.contactPhone), note: s.contactHours, action: { label: "Appeler", href: `tel:${s.contactPhone}` } },
+    s.contactPhones.length > 0 && {
+      icon: Smartphone, label: s.contactPhones.length > 1 ? "Par téléphone" : "Par téléphone",
+      phones: s.contactPhones.map((p) => ({ text: formatTunisianPhone(p), href: `tel:${p}`, whatsapp: p === s.whatsappPhone })),
+      note: s.contactHours,
+      ...(s.whatsappPhone ? { action: { label: "Écrire sur WhatsApp", href: `https://wa.me/${phoneDigits(s.whatsappPhone)}` } } : s.contactPhones.length === 1 ? { action: { label: "Appeler", href: `tel:${s.contactPhones[0]}` } } : {}),
+    },
     s.contactEmail && { icon: Mail, label: "Par e-mail", value: s.contactEmail, note: s.contactEmailNote, action: { label: "Écrire un e-mail", href: `mailto:${s.contactEmail}` } },
     s.contactAddress && { icon: MapPin, label: "Notre adresse", value: s.contactAddress, note: s.contactAddressNote },
   ].filter(Boolean) as Row[];
@@ -34,12 +40,21 @@ export default async function ContactPage() {
       <div className="grid items-start gap-6 md:grid-cols-2">
         {/* Colonne gauche : cartes de contact + question sur une commande */}
         <div className="space-y-4">
-          {rows.map(({ icon: Icon, label, value, note, action }) => (
+          {rows.map(({ icon: Icon, label, value, phones, note, action }) => (
             <div key={label} className="card flex flex-wrap items-center gap-4 p-5">
               <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-brass/10 text-brass-dark"><Icon size={24} strokeWidth={1.6} /></span>
               <div className="min-w-[11rem] flex-1">
                 <p className="text-sm font-medium text-ink/60">{label}</p>
-                <p className="break-words text-lg font-semibold">{value}</p>
+                {phones ? (
+                  <ul className="space-y-0.5">
+                    {phones.map((p) => (
+                      <li key={p.href} className="flex flex-wrap items-center gap-2">
+                        <a href={p.href} className="break-words text-lg font-semibold hover:underline">{p.text}</a>
+                        {p.whatsapp && <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-800"><MessageCircle size={11} /> WhatsApp</span>}
+                      </li>
+                    ))}
+                  </ul>
+                ) : <p className="break-words text-lg font-semibold">{value}</p>}
                 {note && <p className="text-sm text-ink/60">{note}</p>}
               </div>
               {action && <a href={action.href} className="rounded-full bg-brass/10 px-5 py-2.5 text-sm font-semibold text-brass-dark transition hover:bg-brass hover:text-white">{action.label}</a>}

@@ -10,7 +10,7 @@ import { NAV_GROUPS, groupHref, itemHref } from "@/lib/navigation";
 type Viewer = { name: string; role: "admin" | "customer" } | null;
 
 /** Menu mobile : panneau qui s'ouvre depuis la gauche (rendu dans <body> : l'en-tête collant crée son propre repère pour les éléments fixes). */
-export function MobileMenu({ open, onClose, user, contactPhone, cartCount }: { open: boolean; onClose: () => void; user: Viewer; contactPhone: string; cartCount: number }) {
+export function MobileMenu({ open, onClose, user, contactPhone, whatsappPhone, morePhones, cartCount }: { open: boolean; onClose: () => void; user: Viewer; contactPhone: string; whatsappPhone: string; morePhones: boolean; cartCount: number }) {
   const router = useRouter();
   const [q, setQ] = useState("");
   const [group, setGroup] = useState<string | null>(null);
@@ -28,6 +28,7 @@ export function MobileMenu({ open, onClose, user, contactPhone, cartCount }: { o
 
   if (!mounted || !open) return null;
   const digits = contactPhone.replace(/\D/g, "");
+  const waDigits = whatsappPhone.replace(/\D/g, "");
   const accountHref = user ? (user.role === "admin" ? "/admin" : "/account") : "/login";
   const row = "flex w-full items-center justify-between gap-3 border-b border-ink/10 px-5 py-4 text-left";
 
@@ -79,14 +80,14 @@ export function MobileMenu({ open, onClose, user, contactPhone, cartCount }: { o
           <Link href="/service-client/suivi-commande" onClick={onClose} className="flex items-center gap-3 px-4 py-3.5 text-sm font-semibold"><Package size={18} /> Suivi de commande</Link>
         </div>
 
-        {digits && (
+        {(digits || waDigits) && (
           <div className="mx-5 mb-8 rounded-2xl bg-sand-100 p-4">
             <p className="mb-3 text-sm font-semibold">Besoin d’aide ?</p>
-            <div className="grid grid-cols-2 gap-2.5">
+            <div className={`grid gap-2.5 ${waDigits ? "grid-cols-2" : "grid-cols-1"}`}>
               <a href={`tel:+${digits}`} className="flex items-center justify-center gap-2 rounded-xl border border-ink/10 bg-white px-2 py-3 text-sm font-semibold"><Phone size={16} /> {contactPhone}</a>
-              <a href={`https://wa.me/${digits}`} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 rounded-xl border border-ink/10 bg-white px-2 py-3 text-sm font-semibold text-emerald-700"><MessageCircle size={16} /> WhatsApp</a>
+              {waDigits && <a href={`https://wa.me/${waDigits}`} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 rounded-xl border border-ink/10 bg-white px-2 py-3 text-sm font-semibold text-emerald-700"><MessageCircle size={16} /> WhatsApp</a>}
             </div>
-            <Link href="/contact" onClick={onClose} className="mt-3 block text-center text-xs text-ink/60 underline underline-offset-4">Ou écrivez-nous</Link>
+            <Link href="/contact" onClick={onClose} className="mt-3 block text-center text-xs text-ink/60 underline underline-offset-4">{morePhones ? "Tous nos numéros et formulaire de contact" : "Ou écrivez-nous"}</Link>
           </div>
         )}
       </div>

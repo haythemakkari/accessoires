@@ -13,6 +13,7 @@ import { GOVERNORATES } from "@/lib/tunisia";
 import { delegationsOf } from "@/lib/delegations";
 import { PHONE_ERROR, parseTunisianPhone } from "@/lib/phone";
 import { CouponBox } from "@/components/shop/CouponBox";
+import { GiftBoxOption } from "@/components/shop/GiftBoxOption";
 import { Totals } from "@/components/shop/Totals";
 import { ProductImage } from "@/components/ui/ProductImage";
 
@@ -23,7 +24,7 @@ const EMPTY: Form = { fullName: "", phone: "", email: "", line: "", city: "", di
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { lines, couponCode, clear, setCoupon, setQty, remove } = useCart();
+  const { lines, couponCode, giftBox, giftMessage, clear, setCoupon, setQty, remove } = useCart();
   const user = useUser((s) => s.user);
   const { quote, error, loading } = useQuote();
   const [step, setStep] = useState(0);
@@ -66,6 +67,8 @@ export default function CheckoutPage() {
           address: { line: f.line, city: f.city, district: f.district.trim() || undefined, notes: f.notes || undefined },
           items: lines.map((l) => ({ productId: l.productId, quantity: l.quantity, variant: l.variant, packagingId: l.packagingId })),
           couponCode: couponCode ?? undefined,
+          giftBox: giftBox || undefined,
+          giftMessage: giftBox && giftMessage.trim() ? giftMessage.trim() : undefined,
         },
       });
       try {
@@ -207,6 +210,7 @@ export default function CheckoutPage() {
             ))}
           </ul>
           <div className="border-t border-ink/10 px-5 py-4"><CouponBox /></div>
+          <GiftBoxOption className="border-t border-ink/10 px-5 py-4" />
           <div className="border-t border-ink/10 bg-sand-50/60 px-5 py-4"><Totals quote={quote} loading={loading} /></div>
         </aside>
       </div>

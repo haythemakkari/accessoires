@@ -71,7 +71,17 @@ async function generateOrderNumber() {
   throw new AppError("Impossible de générer le numéro de commande", 500, "INTERNAL");
 }
 
-export async function previewCart(items: CartInput, couponCode: string | undefined, userId: string | null) {
+/** Frais de la box cadeau : le prix vient toujours des réglages de l'admin. Demandée alors que l'option est désactivée : ignorée à l'aperçu, refusée à la commande. */
+function giftBoxFee(settings: { giftBoxEnabled: boolean; giftBoxPrice: number }, requested: boolean | undefined, strict: boolean) {
+  if (!requested) return 0;
+  if (!settings.giftBoxEnabled) {
+    if (strict) throw new AppError("L'emballage cadeau n'est plus proposé : retirez-le de votre commande", 422, "GIFTBOX_DISABLED");
+    return 0;
+  }
+  return settings.giftBoxPrice;
+}
+
+export async function previewCart(items: CartInput, couponCode: string | undefined, userId: string | null, giftBox = false) {
   const { subtotal, saleSubtotal } = await priceCart(items);
   let discount = 0;
   let excludesSale = false;
@@ -81,7 +91,8 @@ export async function previewCart(items: CartInput, couponCode: string | undefin
     assertCouponUsable(coupon, userId, subtotal);
     ({ discount, excludesSale } = couponDiscount(coupon, subtotal, saleSubtotal));
   }
-  return { ...computeTotals(subtotal, discount, await getSettings()), excludesSale };
+  const settings = await getSettings();
+  return { ...computeTotals(subtotal, discount, settings, giftBoxFee(settings, giftBox, false)), excludesSale };
 }
 
 type CheckoutInput = {
@@ -89,6 +100,8 @@ type CheckoutInput = {
   address: { line: string; city: string; district?: string; postalCode?: string; notes?: string };
   items: CartInput;
   couponCode?: string;
+  giftBox?: boolean;
+  giftMessage?: string;
 };
 
 export async function createOrder(input: CheckoutInput, userId: string | null) {
@@ -102,7 +115,9 @@ export async function createOrder(input: CheckoutInput, userId: string | null) {
     assertCouponUsable(couponDoc, userId, subtotal);
     discount = couponDiscount(couponDoc, subtotal, saleSubtotal).discount;
   }
-  const totals = computeTotals(subtotal, discount, await getSettings()); // frais de livraison lus en base à chaque commande
+  const settings = await getSettings(); // frais de livraison et prix de la box cadeau lus en base à chaque commande
+  const gift = giftBoxFee(settings, input.giftBox, true);
+  const totals = computeTotals(subtotal, discount, settings, gift);
 
   // 1) Réserver le coupon (atomique), 2) décrémenter le stock (atomique, conditionnel), 3) créer la commande.
   // Toute erreur annule les étapes précédentes (compensation, sans nécessiter de replica set).
@@ -139,6 +154,7 @@ export async function createOrder(input: CheckoutInput, userId: string | null) {
         variant: l.variant,
       })),
       ...totals,
+      giftBox: input.giftBox ? { price: gift, message: input.giftMessage || undefined } : undefined,
       coupon: couponDoc ? { id: couponDoc._id, code: couponDoc.code } : undefined,
       statusHistory: [{ status: "pending" }],
     };

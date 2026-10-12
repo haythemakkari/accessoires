@@ -33,6 +33,7 @@ export default function SuccessPage() {
           </ul>
           <div className="mt-3 space-y-1 border-t border-ink/10 pt-3">
             {snap.quote.discount > 0 && <div className="flex justify-between text-emerald-700"><span>Réduction</span><span>-{formatPrice(snap.quote.discount)}</span></div>}
+            {(snap.quote.giftBoxFee ?? 0) > 0 && <div className="flex justify-between"><span>Box cadeau</span><span>{formatPrice(snap.quote.giftBoxFee!)}</span></div>}
             <div className="flex justify-between"><span>Livraison</span><span>{snap.quote.shippingFee ? formatPrice(snap.quote.shippingFee) : "Offerte"}</span></div>
             <div className="flex justify-between text-base font-semibold"><span>Total à payer à la livraison</span><span>{formatPrice(snap.quote.total)}</span></div>
           </div>

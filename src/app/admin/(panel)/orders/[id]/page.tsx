@@ -32,9 +32,16 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
               {o.items.map((i, k) => <tr key={k}><td className="px-4 py-2.5"><div className="flex items-center gap-3"><div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-slate-100">{i.image && /* eslint-disable-next-line @next/next/no-img-element */ <img src={mediaUrl(i.image, 160)} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />}</div><div className="min-w-0">{i.name}{i.variant && <span className="text-slate-400"> · {i.variant}</span>}{i.packaging && <p className="text-xs text-indigo-600">Packaging : {i.packaging.name} (+{formatPrice(i.packaging.supplement)}) · produit {formatPrice(i.basePrice ?? i.price)}</p>}<p className="text-xs text-slate-400">{i.sku}</p></div></div></td><td className="px-4 py-2.5">{formatPrice(i.price)}</td><td className="px-4 py-2.5">{i.quantity}</td><td className="px-4 py-2.5 text-right">{formatPrice(i.price * i.quantity)}</td></tr>)}
             </tbody>
           </table>
+          {o.giftBox && (
+            <div className="border-t border-slate-200 bg-amber-50 p-4 text-sm text-amber-900">
+              <p className="font-medium">🎁 Box cadeau à préparer ({formatPrice(o.giftBox.price)})</p>
+              {o.giftBox.message ? <p className="mt-1 whitespace-pre-wrap">Message de la carte : « {o.giftBox.message} »</p> : <p className="mt-1 text-amber-800/80">Pas de message pour la carte.</p>}
+            </div>
+          )}
           <div className="space-y-1 border-t border-slate-200 p-4 text-sm">
             <div className="flex justify-between"><span className="text-slate-500">Sous-total</span><span>{formatPrice(o.subtotal)}</span></div>
             {o.discount > 0 && <div className="flex justify-between text-emerald-700"><span>Réduction {o.coupon?.code && `(${o.coupon.code})`}</span><span>-{formatPrice(o.discount)}</span></div>}
+            {o.giftBox && <div className="flex justify-between"><span className="text-slate-500">🎁 Box cadeau</span><span>{formatPrice(o.giftBox.price)}</span></div>}
             <div className="flex justify-between"><span className="text-slate-500">Livraison</span><span>{formatPrice(o.shippingFee)}</span></div>
             <div className="flex justify-between pt-1 text-base font-semibold"><span>Total</span><span>{formatPrice(o.total)}</span></div>
           </div>

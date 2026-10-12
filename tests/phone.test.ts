@@ -50,8 +50,8 @@ describe("formulaire de contact", () => {
     expect(contactMessageSchema.safeParse({ ...base, orderNumber: "nm-261006-abc123" }).success).toBe(true);
   });
   it("coordonnées de la boutique : champs vides acceptés, valeurs invalides refusées", () => {
-    expect(contactSettingsSchema.safeParse({ contactEmail: "", contactPhone: "", contactAddress: "", contactHours: "" }).success).toBe(true);
-    expect(contactSettingsSchema.safeParse({ contactEmail: "x", contactPhone: "", contactAddress: "", contactHours: "" }).success).toBe(false);
-    expect(contactSettingsSchema.safeParse({ contactEmail: "", contactPhone: "12", contactAddress: "", contactHours: "" }).success).toBe(false);
+    expect(contactSettingsSchema.safeParse({ contactEmail: "", contactPhones: [], contactAddress: "", contactHours: "" }).success).toBe(true);
+    expect(contactSettingsSchema.safeParse({ contactEmail: "x", contactPhones: [], contactAddress: "", contactHours: "" }).success).toBe(false);
+    expect(contactSettingsSchema.safeParse({ contactEmail: "", contactPhones: ["12"], contactAddress: "", contactHours: "" }).success).toBe(false);
   });
 });

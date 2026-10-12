@@ -9,6 +9,7 @@ import { useCartDrawer } from "@/stores/cartDrawer";
 import { formatPrice } from "@/lib/utils";
 import { ProductImage } from "@/components/ui/ProductImage";
 import { CouponBox } from "@/components/shop/CouponBox";
+import { GiftBoxOption } from "@/components/shop/GiftBoxOption";
 import { Totals } from "@/components/shop/Totals";
 import { useQuote } from "@/lib/client/useQuote";
 import { canPickInline, useQuickAddSimilar, useQuickAddVariant, useSimilar } from "@/lib/client/similar";
@@ -110,6 +111,7 @@ function Body({ close }: { close: () => void }) {
                 <button type="button" onClick={() => setPromoOpen(true)} className="flex w-full items-center gap-3 px-4 py-3.5 text-left text-sm font-semibold text-brass-dark"><Tag size={18} /> J’ai un code promo <ChevronDown size={16} className="ml-auto" /></button>
               )}
             </div>
+            <GiftBoxOption className="rounded-2xl bg-white p-4 shadow-sm" />
             <div className="space-y-3 rounded-2xl bg-white p-4 shadow-sm">
               {error && <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p>}
               <Totals quote={quote} loading={loading} />

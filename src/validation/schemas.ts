@@ -4,6 +4,8 @@ import { ORDER_STATUSES } from "@/models/Order";
 import { GOVERNORATES } from "@/lib/tunisia";
 import { PHONE_ERROR, parseTunisianPhone } from "@/lib/phone";
 import { ANNOUNCEMENTS_MAX, ANNOUNCEMENT_MAX_LENGTH } from "@/lib/announcements";
+import { GIFT_MESSAGE_MAX } from "@/lib/gift";
+import { MAX_CONTACT_PHONES } from "@/lib/contact-phones";
 import { ATTACHMENT_NAME, MAX_ATTACHMENTS_PER_REPLY, MAX_AUDIO_SECONDS, attachmentKind } from "@/lib/exchange-files";
 
 const objectId = z.string().regex(/^[a-f\d]{24}$/i, "Identifiant invalide");
@@ -70,6 +72,9 @@ export const checkoutSchema = z.object({
   }),
   items: z.array(cartItemSchema).min(1, "Panier vide").max(50),
   couponCode: z.string().trim().max(40).optional().or(z.literal("").transform(() => undefined)),
+  /** Box cadeau demandée (le serveur vérifie que l'option est activée et recalcule le prix). */
+  giftBox: z.boolean().default(false),
+  giftMessage: z.string().trim().max(GIFT_MESSAGE_MAX, `${GIFT_MESSAGE_MAX} caractères maximum`).optional(),
 });
 
 const packagingInput = z.object({
@@ -186,6 +191,13 @@ export const welcomeSettingsSchema = z.object({
   welcomeDiscountPercent: z.number().int("Nombre entier requis").min(0, "Minimum 0 (0 = offre désactivée)").max(50, "50 % maximum"),
 });
 
+/** Réglage admin de l'option « Box cadeau » : activée ou non, prix (DT) facturé une fois par commande, description affichée au client. */
+export const giftBoxSettingsSchema = z.object({
+  giftBoxEnabled: z.boolean(),
+  giftBoxPrice: z.number("Prix invalide").min(0, "Prix minimum 0 DT").max(1000, "Prix trop élevé"),
+  giftBoxDescription: z.string().trim().max(200, "200 caractères maximum").default(""),
+});
+
 export const stockSettingsSchema = z.object({
   lowStockThreshold: z.number().int("Nombre entier requis").min(1, "Minimum 1").max(1000, "1000 maximum"),
 });
@@ -233,12 +245,22 @@ export const messageBulkSchema = z.object({
 
 export const contactSettingsSchema = z.object({
   contactEmail: z.preprocess(emptyToUndefined, z.string().trim().email("Email invalide").max(150).optional()).transform((v) => v ?? ""),
-  contactPhone: optionalPhone.transform((v) => v ?? ""),
+  /** Numéros affichés (le 1ᵉʳ est le principal) : chacun validé et normalisé « +216XXXXXXXX », sans doublon. */
+  contactPhones: z.array(z.preprocess((v) => (typeof v === "string" ? v.trim() : v), phone)).max(MAX_CONTACT_PHONES, `${MAX_CONTACT_PHONES} numéros maximum`).default([]),
+  /** Numéro WhatsApp : l'un des numéros ci-dessus, ou vide pour « aucun ». */
+  whatsappPhone: z.string().trim().default(""),
   contactAddress: z.string().trim().max(200, "200 caractères maximum"),
   contactHours: z.string().trim().max(200, "200 caractères maximum"),
   contactEmailNote: z.string().trim().max(200, "200 caractères maximum").default(""),
   contactAddressNote: z.string().trim().max(200, "200 caractères maximum").default(""),
-});
+}).superRefine((c, ctx) => {
+  const seen = new Set<string>();
+  c.contactPhones.forEach((p, i) => { if (seen.has(p)) ctx.addIssue({ code: "custom", path: ["contactPhones", i], message: "Ce numéro est déjà dans la liste" }); seen.add(p); });
+  if (c.whatsappPhone) {
+    const w = parseTunisianPhone(c.whatsappPhone);
+    if (!w || !c.contactPhones.includes(w)) ctx.addIssue({ code: "custom", path: ["whatsappPhone"], message: "Le numéro WhatsApp doit faire partie des numéros de la liste" });
+  }
+}).transform((c) => ({ ...c, whatsappPhone: c.whatsappPhone ? parseTunisianPhone(c.whatsappPhone)! : "", contactPhone: c.contactPhones[0] ?? "" }));
 
 export const contactMessageSchema = z
   .object({

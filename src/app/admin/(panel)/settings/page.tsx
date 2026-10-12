@@ -2,6 +2,7 @@ import { SettingsForm } from "@/components/admin/SettingsForm";
 import { StockSettingsForm } from "@/components/admin/StockSettingsForm";
 import { WelcomeSettingsForm } from "@/components/admin/WelcomeSettingsForm";
 import { ContactSettingsForm } from "@/components/admin/ContactSettingsForm";
+import { GiftBoxSettingsForm } from "@/components/admin/GiftBoxSettingsForm";
 import { AnnouncementsForm } from "@/components/admin/AnnouncementsForm";
 import { AdminPasswordForm } from "@/components/admin/AdminPasswordForm";
 
@@ -12,6 +13,7 @@ export default function Page() {
       <SettingsForm />
       <div className="mt-4"><StockSettingsForm /></div>
       <div className="mt-4"><WelcomeSettingsForm /></div>
+      <div className="mt-4"><GiftBoxSettingsForm /></div>
       <div className="mt-4"><AnnouncementsForm /></div>
       <div className="mt-4"><ContactSettingsForm /></div>
       <div className="mt-4"><AdminPasswordForm /></div>

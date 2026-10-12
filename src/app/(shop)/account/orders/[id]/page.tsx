@@ -55,10 +55,12 @@ export default async function OrderDetail({ params }: { params: Promise<{ id: st
         <div className="space-y-1 p-4 text-sm">
           <div className="flex justify-between"><span className="text-ink/60">Sous-total</span><span>{formatPrice(o.subtotal)}</span></div>
           {o.discount > 0 && <div className="flex justify-between text-emerald-700"><span>Réduction {o.coupon?.code && `(${o.coupon.code})`}</span><span>-{formatPrice(o.discount)}</span></div>}
+          {o.giftBox && <div className="flex justify-between"><span className="text-ink/60">Box cadeau</span><span>{formatPrice(o.giftBox.price)}</span></div>}
           <div className="flex justify-between"><span className="text-ink/60">Livraison</span><span>{o.shippingFee ? formatPrice(o.shippingFee) : "Offerte"}</span></div>
           <div className="flex justify-between pt-2 text-base font-semibold"><span>Total</span><span>{formatPrice(o.total)}</span></div>
         </div>
       </div>
+      {o.giftBox?.message && <div className="card p-5 text-sm"><p className="label">Message de la carte (box cadeau)</p><p className="whitespace-pre-wrap">{o.giftBox.message}</p></div>}
       <div className="grid gap-4">
         <div className="card p-5 text-sm"><p className="label">Livraison</p>{o.customer?.fullName}<br />{o.address?.line}<br />{[o.address?.district, o.address?.city].filter(Boolean).join(", ")} {o.address?.postalCode}<br />{o.customer?.phone}</div>
       </div>

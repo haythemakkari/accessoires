@@ -41,6 +41,8 @@ const orderSchema = new Schema(
     discount: { type: Number, default: 0 },
     coupon: { id: { type: Schema.Types.ObjectId, ref: "Coupon" }, code: String },
     shippingFee: { type: Number, default: 0 },
+    /** Box cadeau choisie par le client : prix figé au moment de la commande + message de la carte (facultatif). */
+    giftBox: { type: new Schema({ price: { type: Number, required: true, min: 0 }, message: { type: String, trim: true, maxlength: 200 } }, { _id: false }) },
     total: { type: Number, required: true },
     status: { type: String, enum: ORDER_STATUSES, default: "pending", index: true },
     statusHistory: { type: [{ status: String, at: { type: Date, default: Date.now }, _id: false }], default: [] },

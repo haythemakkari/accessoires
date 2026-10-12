@@ -9,7 +9,7 @@ import { STATUS_LABEL } from "@/lib/status";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { PageHeader, Pager, useDebounced } from "./ui";
 
-type O = { _id: string; orderNumber: string; isGuest: boolean; customer: { fullName: string; phone: string }; total: number; status: string; createdAt: string };
+type O = { _id: string; orderNumber: string; isGuest: boolean; customer: { fullName: string; phone: string }; total: number; status: string; createdAt: string; giftBox?: { price: number } };
 type Res = { items: O[]; total: number; page: number; pages: number };
 
 export function OrdersTable() {
@@ -55,7 +55,7 @@ export function OrdersTable() {
             <tbody className="divide-y divide-slate-100">
               {data?.items.map((o) => (
                 <tr key={o._id} className="hover:bg-slate-50">
-                  <td className="px-4 py-2.5 font-mono text-xs font-medium">{o.orderNumber}</td>
+                  <td className="px-4 py-2.5 font-mono text-xs font-medium">{o.orderNumber}{o.giftBox && <span className="ml-1.5 font-sans" title="Box cadeau" aria-label="Box cadeau">🎁</span>}</td>
                   <td className="px-4 py-2.5">{o.customer.fullName}{o.isGuest && <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-800">Invité</span>}</td>
                   <td className="px-4 py-2.5 text-slate-600">{o.customer.phone}</td>
                   <td className="px-4 py-2.5 tabular-nums">{formatPrice(o.total)}</td>

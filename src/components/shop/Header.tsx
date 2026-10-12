@@ -46,7 +46,7 @@ function Dropdown({ group }: { group: NavGroup }) {
   );
 }
 
-export function Header({ siteName, freeShippingThreshold, welcomeDiscount, contactPhone, announcements }: { siteName: string; freeShippingThreshold: number; welcomeDiscount: number; contactPhone: string; announcements: string[] }) {
+export function Header({ siteName, freeShippingThreshold, welcomeDiscount, contactPhone, whatsappPhone, morePhones, announcements }: { siteName: string; freeShippingThreshold: number; welcomeDiscount: number; contactPhone: string; whatsappPhone: string; morePhones: boolean; announcements: string[] }) {
   const count = useCart((s) => cartCount(s.lines));
   // Avant la réponse de /api/auth/me, le cookie « indice » dit déjà si un visiteur est connecté (et son rôle) : pas de clignotement.
   const storeUser = useUser((s) => s.user);
@@ -101,7 +101,7 @@ export function Header({ siteName, freeShippingThreshold, welcomeDiscount, conta
       </div>
       <CartDrawer />
       <AddedSheet />
-      <MobileMenu open={menu} onClose={closeMenu} user={user} contactPhone={contactPhone} cartCount={mounted ? count : 0} />
+      <MobileMenu open={menu} onClose={closeMenu} user={user} contactPhone={contactPhone} whatsappPhone={whatsappPhone} morePhones={morePhones} cartCount={mounted ? count : 0} />
     </header>
   );
 }
