@@ -91,7 +91,7 @@ export default async function HomePage() {
             <div className="absolute -bottom-16 -right-16 h-56 w-56 rounded-full bg-clay/20 blur-3xl" />
             <p className="eyebrow !text-brass-light">Offre de bienvenue</p>
             <h2 className="h-display mx-auto mt-3 max-w-2xl text-3xl sm:text-5xl">{settings.welcomeDiscountPercent}% de réduction sur votre première commande</h2>
-            <p className="mx-auto mt-4 max-w-md text-sand-300/80">Créez votre compte en 30 secondes : votre code personnel vous attend dans votre espace.</p>
+            <p className="mx-auto mt-4 max-w-md text-sand-300/80">Créez votre compte en 30 secondes : votre code personnel vous attend dans votre espace (valable hors produits en promotion).</p>
             <Link href="/register" className="btn-brass mt-8">Créer mon compte</Link>
           </div>
         </Reveal>

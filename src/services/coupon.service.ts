@@ -56,7 +56,7 @@ export async function createWelcomeCoupon(userId: Types.ObjectId, percent: numbe
   for (let i = 0; i < 5; i++) {
     const code = `WELCOME-${randomBytes(4).toString("hex").toUpperCase().slice(0, 6)}`;
     try {
-      return await Coupon.create({ code, type: "percentage", value: percent, maxUses: 1, allowedUsers: [userId], kind: "welcome" });
+      return await Coupon.create({ code, type: "percentage", value: percent, maxUses: 1, allowedUsers: [userId], kind: "welcome", appliesToSaleItems: false });
     } catch (e: unknown) {
       if ((e as { code?: number }).code !== 11000) throw e; // collision de code → on réessaie
     }

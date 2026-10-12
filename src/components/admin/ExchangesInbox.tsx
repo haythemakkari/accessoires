@@ -7,8 +7,10 @@ import { fetcher } from "@/lib/client/fetcher";
 import { formatDate } from "@/lib/utils";
 import { formatTunisianPhone } from "@/lib/phone";
 import { ConfirmDialog, PageHeader, Pager } from "./ui";
+import { AttachmentList } from "@/components/shop/AttachmentList";
+import { attachmentUrl } from "@/lib/exchange-files";
 
-type Reply = { from: "admin" | "customer"; text: string; createdAt: string };
+type Reply = { from: "admin" | "customer"; text: string; createdAt: string; attachments?: { kind: "image" | "audio"; name: string; duration?: number | null }[] };
 type X = {
   _id: string; name: string; phone?: string; email?: string; subject: string; message: string; orderNumber?: string; order?: string; user?: string;
   status: "open" | "answered" | "closed"; isRead: boolean; replies: Reply[]; createdAt: string;
@@ -20,6 +22,13 @@ const STATUS = {
   answered: { label: "Répondue", cls: "bg-emerald-100 text-emerald-800" },
   closed: { label: "Clôturée", cls: "bg-slate-200 text-slate-700" },
 } as const;
+/** Aperçu d'un message dans la liste : son texte, ou « 📷 2 photos · 🎤 vocal » s'il ne contient que des pièces jointes. */
+function previewOf(r: Reply) {
+  if (r.text) return r.text;
+  const a = r.attachments ?? [];
+  const photos = a.filter((x) => x.kind === "image").length;
+  return [photos > 0 && `📷 ${photos} photo${photos > 1 ? "s" : ""}`, a.some((x) => x.kind === "audio") && "🎤 message vocal"].filter(Boolean).join(" · ") || "(message)";
+}
 const TABS = [["", "Toutes"], ["open", "À traiter"], ["answered", "Répondues"], ["closed", "Clôturées"]] as const;
 
 export function ExchangesInbox() {
@@ -88,7 +97,7 @@ export function ExchangesInbox() {
                         <p className={`truncate text-sm ${x.isRead ? "text-slate-700" : "font-semibold text-slate-900"}`}><span className="font-mono">{x.orderNumber}</span> · {x.name}</p>
                         <span className="flex items-center gap-2 text-xs text-slate-400">{formatDate(x.createdAt)}<span className={`rounded-full px-2 py-0.5 font-medium ${st.cls}`}>{st.label}</span></span>
                       </div>
-                      {open !== x._id && <p className="truncate text-sm text-slate-500">{x.replies.length > 0 ? `↳ ${x.replies[x.replies.length - 1].text}` : x.message}</p>}
+                      {open !== x._id && <p className="truncate text-sm text-slate-500">{x.replies.length > 0 ? `↳ ${previewOf(x.replies[x.replies.length - 1])}` : x.message}</p>}
                     </div>
                   </button>
                   <button onClick={() => setToDelete(x)} className="shrink-0 rounded-lg p-2 text-slate-400 transition hover:bg-rose-50 hover:text-rose-600" aria-label={`Supprimer la demande de ${x.name}`} title="Supprimer"><Trash2 size={16} /></button>
@@ -107,7 +116,8 @@ export function ExchangesInbox() {
                       {x.replies.map((r, i) => (
                         <div key={i} className={`max-w-[90%] rounded-2xl p-3 ${r.from === "admin" ? "ml-auto rounded-tr-sm bg-indigo-600 text-white" : "rounded-tl-sm bg-slate-100"}`}>
                           <p className={`mb-1 text-xs font-medium ${r.from === "admin" ? "text-indigo-200" : "text-slate-500"}`}>{r.from === "admin" ? "Vous" : x.name} · {formatDate(r.createdAt)}</p>
-                          <p className="whitespace-pre-wrap">{r.text}</p>
+                          {r.text && <p className="whitespace-pre-wrap">{r.text}</p>}
+                          <AttachmentList items={(r.attachments ?? []).map((a) => ({ kind: a.kind, url: attachmentUrl(a.name), duration: a.duration }))} tone={r.from === "admin" ? "dark" : "light"} />
                         </div>
                       ))}
                     </div>

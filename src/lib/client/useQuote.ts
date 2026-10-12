@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useCart } from "@/stores/cart";
 import { fetcher } from "./fetcher";
 
-export type Quote = { subtotal: number; discount: number; shippingFee: number; total: number };
+export type Quote = { subtotal: number; discount: number; shippingFee: number; total: number; /** Le coupon appliqué exclut les produits en promotion. */ excludesSale?: boolean };
 
 /** Le total affiché vient toujours du serveur (prix, stock, coupon, livraison recalculés). */
 export function useQuote() {

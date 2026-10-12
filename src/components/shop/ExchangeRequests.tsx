@@ -1,11 +1,12 @@
 "use client";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { ChevronDown, RefreshCcw, Send } from "lucide-react";
-import { toast } from "sonner";
+import { ChevronDown, RefreshCcw } from "lucide-react";
 import { fetcher } from "@/lib/client/fetcher";
 import { formatDate } from "@/lib/utils";
 import type { CustomerExchange } from "@/lib/exchange-dto";
+import { AttachmentList } from "./AttachmentList";
+import { ReplyComposer } from "./ReplyComposer";
 
 export const EXCHANGE_STATUS: Record<string, { label: string; cls: string }> = {
   open: { label: "En attente", cls: "bg-amber-100 text-amber-800" },
@@ -17,8 +18,6 @@ export const EXCHANGE_STATUS: Record<string, { label: string; cls: string }> = {
 export function ExchangeRequests() {
   const [items, setItems] = useState<CustomerExchange[] | null>(null);
   const [open, setOpen] = useState<string | null>(null);
-  const [draft, setDraft] = useState<Record<string, string>>({});
-  const [sending, setSending] = useState<string | null>(null);
   const load = useCallback(() => fetcher<{ items: CustomerExchange[] }>("/api/account/exchanges").then((r) => setItems(r.items)).catch(() => setItems([])), []);
   useEffect(() => { load(); }, [load]);
 
@@ -31,16 +30,6 @@ export function ExchangeRequests() {
     }
   };
 
-  const send = async (x: CustomerExchange) => {
-    const text = (draft[x.id] ?? "").trim();
-    if (text.length < 2) return toast.error("Écrivez votre message");
-    setSending(x.id);
-    try {
-      await fetcher(`/api/account/exchanges/${x.id}/reply`, { method: "POST", body: { text } });
-      setDraft((d) => ({ ...d, [x.id]: "" }));
-      await load();
-    } catch (e) { toast.error((e as Error).message); } finally { setSending(null); }
-  };
 
   const unread = items?.filter((i) => i.unread).length ?? 0;
   return (
@@ -74,15 +63,12 @@ export function ExchangeRequests() {
                     {x.replies.map((r, i) => (
                       <div key={i} className={`max-w-[92%] rounded-2xl p-3 shadow-sm ${r.from === "admin" ? "ml-auto rounded-tr-sm bg-ink text-sand-50" : "rounded-tl-sm bg-white"}`}>
                         <p className={`mb-1 text-xs font-medium ${r.from === "admin" ? "text-brass-light" : "text-ink/55"}`}>{r.from === "admin" ? "Accessoires Plus" : "Vous"} · {formatDate(r.createdAt as string)}</p>
-                        <p className="whitespace-pre-wrap">{r.text}</p>
+                        {r.text && <p className="whitespace-pre-wrap">{r.text}</p>}
+                        <AttachmentList items={r.attachments} tone={r.from === "admin" ? "dark" : "light"} />
                       </div>
                     ))}
                     {x.status !== "closed" ? (
-                      <div>
-                        <label className="label" htmlFor={`rep-${x.id}`}>Votre message</label>
-                        <textarea id={`rep-${x.id}`} rows={3} maxLength={2000} className="input" placeholder="Répondre à l’équipe…" value={draft[x.id] ?? ""} onChange={(e) => setDraft((d) => ({ ...d, [x.id]: e.target.value }))} />
-                        <button type="button" onClick={() => send(x)} disabled={sending === x.id} className="btn-primary mt-2 !py-2.5"><Send size={15} /> {sending === x.id ? "Envoi…" : "Envoyer"}</button>
-                      </div>
+                      <ReplyComposer requestId={x.id} onSent={load} />
                     ) : <p className="rounded-xl bg-white px-3 py-2 text-xs text-ink/60">Cette demande est clôturée. Une seule demande d’échange est possible par commande : pour une autre question, <Link href="/contact" className="underline underline-offset-4">écrivez-nous</Link>.</p>}
                   </div>
                 )}

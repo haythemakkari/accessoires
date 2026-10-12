@@ -11,7 +11,7 @@ export default async function FaqPage() {
   const w = s.welcomeDiscountPercent;
   const qa: [string, string][] = [
     ["Dois-je créer un compte pour commander ?", `Non. Vous pouvez commander sans compte : nous vous demandons seulement vos coordonnées et votre adresse de livraison. Un compte vous permet de suivre vos commandes${w > 0 ? " et de recevoir un code de bienvenue" : ""}.`],
-    ...(w > 0 ? [["Comment fonctionne le code de bienvenue ?", `En créant un compte, vous recevez un code personnel de ${w} % de réduction (format WELCOME-XXXXXX). Il est visible dans votre espace, utilisable une seule fois et réservé à votre compte.`] as [string, string]] : []),
+    ...(w > 0 ? [["Comment fonctionne le code de bienvenue ?", `En créant un compte, vous recevez un code personnel de ${w} % de réduction (format WELCOME-XXXXXX). Il est visible dans votre espace, utilisable une seule fois, réservé à votre compte et valable sur les produits hors promotion.`] as [string, string]] : []),
     ["Comment puis-je payer ?", "Le paiement se fait en espèces à la livraison, à la réception de votre commande."],
     ["Quels sont les frais de livraison ?", `${formatPrice(s.shippingFee)} par commande${s.freeShippingThreshold > 0 ? `, et la livraison est offerte dès ${formatPrice(s.freeShippingThreshold)} d'achat` : ""}.`],
     ["Comment suivre ma commande ?", "Avec votre numéro de commande et votre numéro de téléphone, depuis la page « Suivi colis » (lien en bas de page). Si vous avez un compte, toutes vos commandes sont aussi dans « Mes commandes »."],

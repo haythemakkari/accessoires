@@ -29,7 +29,7 @@ export default async function AccountDashboard() {
           <Gift className="text-brass-light" />
           <p className="mt-3 text-lg">Bienvenue ! Voici votre code de réduction de {welcome!.value}{welcome!.type === "percentage" ? "%" : " DT"} :</p>
           <p className="mt-2 inline-block rounded-xl border border-dashed border-brass-light px-5 py-2 font-mono text-2xl tracking-widest text-brass-light">{welcome!.code}</p>
-          <p className="mt-3 text-sm text-sand-300/70">Utilisable une seule fois, à l’étape « Récapitulatif » du paiement.</p>
+          <p className="mt-3 text-sm text-sand-300/70">Utilisable une seule fois, à l’étape « Récapitulatif » du paiement, sur les produits <strong>hors promotion</strong>.</p>
         </div>
       )}
       <div className="grid gap-4 sm:grid-cols-2">

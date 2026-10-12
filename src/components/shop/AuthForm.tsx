@@ -63,7 +63,7 @@ export function AuthForm({ mode, welcomeDiscount, google = false }: { mode: "log
       <form onSubmit={submit} className="card w-full max-w-md space-y-5 p-8">
         <div>
           <h1 className="h-display text-3xl">{register ? "Créer un compte" : "Connexion"}</h1>
-          {register && welcomeDiscount > 0 && <p className="mt-2 rounded-lg bg-brass/10 px-3 py-2 text-sm text-brass-dark">🎁 Recevez immédiatement un code de <strong>-{welcomeDiscount}%</strong> sur votre première commande.</p>}
+          {register && welcomeDiscount > 0 && <p className="mt-2 rounded-lg bg-brass/10 px-3 py-2 text-sm text-brass-dark">🎁 Recevez immédiatement un code de <strong>-{welcomeDiscount}%</strong> sur votre première commande (hors produits en promotion).</p>}
         </div>
         {googleError && <p role="alert" className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">{googleError}</p>}
         {google && (

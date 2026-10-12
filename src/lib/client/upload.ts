@@ -10,7 +10,7 @@ const SHRINK_ABOVE = 3 * 1024 * 1024;
 const MAX_SIDE = 2400;
 
 /** Photo de plus de 3 Mo (téléphone, appareil photo) → JPEG 2400 px max (~0,5 à 1,5 Mo). En cas d'échec, l'original est envoyé tel quel. */
-async function shrink(file: File): Promise<File> {
+export async function shrink(file: File): Promise<File> {
   if (file.size <= SHRINK_ABOVE || typeof createImageBitmap !== "function") return file;
   try {
     const bmp = await createImageBitmap(file, { imageOrientation: "from-image" });
@@ -27,7 +27,7 @@ async function shrink(file: File): Promise<File> {
   }
 }
 
-function post<T>(url: string, form: FormData, onProgress?: (fraction: number) => void): Promise<T> {
+export function post<T>(url: string, form: FormData, onProgress?: (fraction: number) => void): Promise<T> {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open("POST", url);
@@ -76,4 +76,14 @@ export async function uploadVideo(file: File, direct: boolean, onProgress?: (pct
     throw new Error(/content type/i.test((e as Error).message) ? "Format non supporté : utilisez une vidéo MP4 (H.264) ou WebM." : (e as Error).message || "Échec de l'envoi");
   }
   return `/media/video/${name}`;
+}
+
+export type ExchangeUpload = { name: string; kind: "image" | "audio"; size: number };
+
+/** Dépose une photo (réduite si elle est lourde) ou un message vocal pour la conversation d'une demande d'échange. */
+export async function uploadExchangeFile(file: File | Blob, filename: string, onProgress?: (fraction: number) => void): Promise<ExchangeUpload> {
+  const form = new FormData();
+  const f = file instanceof File ? await shrink(file) : file;
+  form.append("file", f, filename);
+  return post<ExchangeUpload>("/api/account/exchanges/files", form, onProgress);
 }

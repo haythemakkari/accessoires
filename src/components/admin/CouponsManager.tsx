@@ -6,9 +6,9 @@ import { fetcher } from "@/lib/client/fetcher";
 import { formatDate } from "@/lib/utils";
 import { ConfirmDialog, Modal, PageHeader, Switch } from "./ui";
 
-type C = { _id: string; code: string; type: "percentage" | "fixed"; value: number; startsAt?: string; expiresAt?: string; maxUses?: number; usedCount: number; minOrderAmount: number; isActive: boolean; allowedUsers: string[]; kind: "standard" | "welcome" };
-type F = { code: string; type: "percentage" | "fixed"; value: string; startsAt: string; expiresAt: string; maxUses: string; minOrderAmount: string; isActive: boolean };
-const empty: F = { code: "", type: "percentage", value: "", startsAt: "", expiresAt: "", maxUses: "", minOrderAmount: "0", isActive: true };
+type C = { _id: string; code: string; type: "percentage" | "fixed"; value: number; startsAt?: string; expiresAt?: string; maxUses?: number; usedCount: number; minOrderAmount: number; isActive: boolean; appliesToSaleItems?: boolean; allowedUsers: string[]; kind: "standard" | "welcome" };
+type F = { code: string; type: "percentage" | "fixed"; value: string; startsAt: string; expiresAt: string; maxUses: string; minOrderAmount: string; isActive: boolean; appliesToSaleItems: boolean };
+const empty: F = { code: "", type: "percentage", value: "", startsAt: "", expiresAt: "", maxUses: "", minOrderAmount: "0", isActive: true, appliesToSaleItems: true };
 const d = (s?: string) => (s ? s.slice(0, 10) : "");
 
 export function CouponsManager() {
@@ -24,14 +24,14 @@ export function CouponsManager() {
 
   const open = (c: C | "new") => {
     setEdit(c);
-    setF(c === "new" ? empty : { code: c.code, type: c.type, value: String(c.value), startsAt: d(c.startsAt), expiresAt: d(c.expiresAt), maxUses: c.maxUses != null ? String(c.maxUses) : "", minOrderAmount: String(c.minOrderAmount), isActive: c.isActive });
+    setF(c === "new" ? empty : { code: c.code, type: c.type, value: String(c.value), startsAt: d(c.startsAt), expiresAt: d(c.expiresAt), maxUses: c.maxUses != null ? String(c.maxUses) : "", minOrderAmount: String(c.minOrderAmount), isActive: c.isActive, appliesToSaleItems: c.appliesToSaleItems !== false });
   };
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
     setBusy(true);
     try {
       const existing = edit !== "new" ? (edit as C) : null;
-      const body = { code: f.code, type: f.type, value: Number(f.value), startsAt: f.startsAt || null, expiresAt: f.expiresAt || null, maxUses: f.maxUses ? Number(f.maxUses) : null, minOrderAmount: Number(f.minOrderAmount) || 0, isActive: f.isActive, allowedUsers: existing?.allowedUsers ?? [] };
+      const body = { code: f.code, type: f.type, value: Number(f.value), startsAt: f.startsAt || null, expiresAt: f.expiresAt || null, maxUses: f.maxUses ? Number(f.maxUses) : null, minOrderAmount: Number(f.minOrderAmount) || 0, isActive: f.isActive, appliesToSaleItems: f.appliesToSaleItems, allowedUsers: existing?.allowedUsers ?? [] };
       await fetcher(existing ? `/api/admin/coupons/${existing._id}` : "/api/admin/coupons", { method: existing ? "PUT" : "POST", body });
       toast.success("Coupon enregistré");
       setEdit(null);
@@ -54,7 +54,7 @@ export function CouponsManager() {
           <tbody className="divide-y divide-slate-100">
             {items?.map((c) => (
               <tr key={c._id} className="hover:bg-slate-50">
-                <td className="px-4 py-2.5 font-mono font-medium">{c.code}{c.allowedUsers.length > 0 && <span className="ml-2 rounded bg-slate-100 px-1.5 py-0.5 font-sans text-[10px] text-slate-500">réservé</span>}</td>
+                <td className="px-4 py-2.5 font-mono font-medium">{c.code}{(c.appliesToSaleItems === false || c.kind === "welcome") && <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 font-sans text-[10px] text-amber-800" title="Ne s'applique pas aux produits en promotion">hors promos</span>}{c.allowedUsers.length > 0 && <span className="ml-2 rounded bg-slate-100 px-1.5 py-0.5 font-sans text-[10px] text-slate-500">réservé</span>}</td>
                 <td className="px-4 py-2.5">{c.type === "percentage" ? `${c.value}%` : `${c.value} DT`}</td>
                 <td className="px-4 py-2.5 tabular-nums">{c.usedCount}{c.maxUses != null ? ` / ${c.maxUses}` : " / ∞"}</td>
                 <td className="px-4 py-2.5 text-slate-500">{c.startsAt ? formatDate(c.startsAt) : "—"} → {c.expiresAt ? formatDate(c.expiresAt) : "∞"}</td>
@@ -80,6 +80,10 @@ export function CouponsManager() {
             <div><label className="a-label">Expiration</label><input type="date" className="a-input" value={f.expiresAt} onChange={(e) => setF({ ...f, expiresAt: e.target.value })} /></div>
             <div><label className="a-label">Utilisations max. (vide = illimité)</label><input type="number" min={1} className="a-input" value={f.maxUses} onChange={(e) => setF({ ...f, maxUses: e.target.value })} /></div>
             <div><label className="a-label">Montant min. de commande</label><input type="number" min={0} className="a-input" value={f.minOrderAmount} onChange={(e) => setF({ ...f, minOrderAmount: e.target.value })} /></div>
+          </div>
+          <div className="rounded-lg bg-slate-50 p-3 text-sm">
+            <div className="flex items-center gap-2"><Switch label="Applicable aux produits en promotion" checked={f.appliesToSaleItems} onChange={(v) => setF({ ...f, appliesToSaleItems: v })} /> <span className="font-medium">Applicable aux produits en promotion</span></div>
+            <p className="mt-1.5 text-xs text-slate-500">{f.appliesToSaleItems ? "Le code réduit tout le panier, y compris les produits déjà soldés." : "Le code ne réduit que les produits sans promotion en cours. Un panier composé uniquement de produits soldés ne peut pas l’utiliser."}</p>
           </div>
           <div className="flex items-center gap-2 text-sm"><Switch label="Actif" checked={f.isActive} onChange={(v) => setF({ ...f, isActive: v })} /> Actif</div>
           <div className="flex justify-end gap-2"><button type="button" className="a-btn-ghost" onClick={() => setEdit(null)}>Annuler</button><button className="a-btn-primary" disabled={busy}>Enregistrer</button></div>

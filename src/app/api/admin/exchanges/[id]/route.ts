@@ -3,6 +3,7 @@ import { requireAdmin } from "@/lib/auth";
 import { notFound } from "@/lib/errors";
 import { exchangePatchSchema } from "@/validation/schemas";
 import { Message } from "@/models/Message";
+import { deleteExchangeFiles } from "@/services/exchange.service";
 
 type Ctx = { params: Promise<{ id: string }> };
 const validId = (id: string) => {
@@ -23,6 +24,8 @@ export const PATCH = api<Ctx>(async (req, { params }) => {
 export const DELETE = api<Ctx>(async (req, { params }) => {
   assertSameOrigin(req);
   await requireAdmin();
-  if (!(await Message.findOneAndDelete({ _id: validId((await params).id), kind: "exchange" }))) throw notFound();
+  const m = await Message.findOneAndDelete({ _id: validId((await params).id), kind: "exchange" }).lean();
+  if (!m) throw notFound();
+  await deleteExchangeFiles([m]); // photos et vocaux de la demande
   return { ok: true };
 });

@@ -1,7 +1,13 @@
 import mongoose, { Schema, type InferSchemaType, type HydratedDocument } from "mongoose";
 
 /** Réponse dans le fil d'une demande d'échange (de l'admin vers le client). */
-const replySchema = new Schema({ from: { type: String, enum: ["admin", "customer"], required: true }, text: { type: String, required: true, trim: true, maxlength: 2000 } }, { timestamps: { createdAt: true, updatedAt: false } });
+/** Photo (WebP réencodé) ou message vocal envoyé par le client ; `name` = « idClient/fichier » dans le stockage privé. */
+const attachmentSchema = new Schema({ kind: { type: String, enum: ["image", "audio"], required: true }, name: { type: String, required: true }, duration: { type: Number, min: 0, max: 600 }, size: { type: Number, min: 0 } }, { _id: false });
+const replySchema = new Schema({
+  from: { type: String, enum: ["admin", "customer"], required: true },
+  text: { type: String, trim: true, maxlength: 2000, default: "" }, // vide si le message ne contient que des pièces jointes
+  attachments: { type: [attachmentSchema], default: [] },
+}, { timestamps: { createdAt: true, updatedAt: false } });
 
 export const EXCHANGE_STATUSES = ["open", "answered", "closed"] as const;
 export type ExchangeStatus = (typeof EXCHANGE_STATUSES)[number];

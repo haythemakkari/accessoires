@@ -27,7 +27,7 @@ export function WelcomeSettingsForm() {
           <div>
             <label className="a-label">Réduction du code de bienvenue (%)</label>
             <input className="a-input" type="number" min={0} max={50} step={1} required value={v} onChange={(e) => setV(e.target.value)} />
-            <p className="mt-1 text-xs text-slate-500">Offerte à chaque nouveau compte, utilisable une seule fois. Entre 0 et 50. Mettez 0 pour désactiver l’offre.</p>
+            <p className="mt-1 text-xs text-slate-500">Offerte à chaque nouveau compte, utilisable une seule fois, et jamais sur les produits en promotion. Entre 0 et 50. Mettez 0 pour désactiver l’offre.</p>
           </div>
           <p className="rounded-lg bg-slate-50 p-3 text-xs text-slate-600">S’applique aux <strong>nouvelles inscriptions</strong> : les codes déjà envoyés gardent leur valeur d’origine. Les textes du site (bandeau, accueil, inscription, FAQ) se mettent à jour automatiquement.</p>
           <button className="a-btn-primary" disabled={busy}>{busy ? "Enregistrement…" : "Enregistrer"}</button>

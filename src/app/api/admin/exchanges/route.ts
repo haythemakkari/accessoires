@@ -4,6 +4,7 @@ import { requireAdmin } from "@/lib/auth";
 import { plain } from "@/lib/utils";
 import { messageBulkSchema } from "@/validation/schemas";
 import { Message } from "@/models/Message";
+import { deleteExchangeFiles } from "@/services/exchange.service";
 
 const query = z.object({
   status: z.enum(["open", "answered", "closed"]).optional(),
@@ -31,6 +32,9 @@ export const DELETE = api(async (req) => {
   assertSameOrigin(req);
   await requireAdmin();
   const { ids } = await parseBody(req, messageBulkSchema);
-  const res = await Message.deleteMany({ kind: "exchange", _id: { $in: [...new Set(ids)] } });
+  const filter = { kind: "exchange" as const, _id: { $in: [...new Set(ids)] } };
+  const docs = await Message.find(filter).select("replies").lean();
+  const res = await Message.deleteMany(filter);
+  await deleteExchangeFiles(docs); // photos et vocaux des demandes supprimées
   return { ok: true, deleted: res.deletedCount };
 });

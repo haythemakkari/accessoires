@@ -3,6 +3,8 @@ import { Message } from "@/models/Message";
 import { Order } from "@/models/Order";
 import { AppError, notFound } from "@/lib/errors";
 import { EXCHANGE_MAX_REPLIES, EXCHANGE_WINDOW_DAYS, deliveredAt, isWithinExchangeWindow } from "@/lib/exchange";
+import { MAX_ATTACHMENTS_PER_REQUEST, attachmentKind, type Attachment } from "@/lib/exchange-files";
+import { deleteUpload, statUpload } from "@/lib/storage";
 
 type NewExchange = { name: string; phone?: string; email?: string; subject: string; message: string; orderNumber?: string };
 
@@ -54,14 +56,31 @@ export async function markExchangeSeen(userId: string, id: string) {
  * Réponse du client dans sa demande (conversation). Uniquement sur SA demande et tant qu'elle n'est pas clôturée.
  * La demande repasse « à traiter » et devient non lue pour l'admin.
  */
-export async function addCustomerReply(userId: string, id: string, text: string) {
+export async function addCustomerReply(userId: string, id: string, text: string, files: { name: string; duration?: number | null }[] = []) {
   const m = await Message.findOne({ _id: id, kind: "exchange", user: userId }).select("status replies");
   if (!m) throw notFound();
   if (m.status === "closed") throw new AppError("Cette demande est clôturée : pour une autre question, écrivez-nous via la page Contact", 409, "EXCHANGE_CLOSED");
   if (m.replies.length >= EXCHANGE_MAX_REPLIES) throw new AppError("Cette conversation est trop longue : contactez-nous par téléphone", 409, "EXCHANGE_FULL");
+  // Pièces jointes : uniquement des fichiers déposés par CE client (dossier à son identifiant) et réellement présents dans le stockage.
+  const attachments: Attachment[] = [];
+  const used = m.replies.reduce((n, r) => n + (r.attachments?.length ?? 0), 0);
+  if (used + files.length > MAX_ATTACHMENTS_PER_REQUEST) throw new AppError(`Trop de pièces jointes dans cette demande (${MAX_ATTACHMENTS_PER_REQUEST} maximum)`, 409, "EXCHANGE_ATTACHMENTS_FULL");
+  for (const f of files) {
+    if (!f.name.startsWith(`${userId}/`)) throw new AppError("Pièce jointe invalide", 422, "ATTACHMENT_INVALID");
+    const stored = await statUpload(`exchange/${f.name}`);
+    if (!stored) throw new AppError("Une pièce jointe n'a pas été envoyée correctement : réessayez", 422, "ATTACHMENT_MISSING");
+    const kind = attachmentKind(f.name);
+    attachments.push({ kind, name: f.name, size: stored.size, duration: kind === "audio" ? f.duration ?? null : null });
+  }
   return Message.findOneAndUpdate(
     { _id: id, kind: "exchange", user: userId, status: { $ne: "closed" } },
-    { $push: { replies: { from: "customer", text } }, $set: { status: "open", isRead: false, customerUnread: false } },
+    { $push: { replies: { from: "customer", text, attachments } }, $set: { status: "open", isRead: false, customerUnread: false } },
     { returnDocument: "after" },
   );
+}
+
+/** Supprime les fichiers joints de demandes supprimées (au mieux : une erreur de stockage n'empêche pas la suppression). */
+export async function deleteExchangeFiles(messages: { replies?: { attachments?: { name: string }[] }[] }[]) {
+  const names = messages.flatMap((m) => (m.replies ?? []).flatMap((r) => (r.attachments ?? []).map((a) => a.name)));
+  await Promise.all(names.map((n) => deleteUpload(`exchange/${n}`).catch(() => {})));
 }

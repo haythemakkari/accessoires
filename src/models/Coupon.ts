@@ -12,6 +12,8 @@ const couponSchema = new Schema(
     usedCount: { type: Number, default: 0, min: 0 },
     minOrderAmount: { type: Number, default: 0, min: 0 },
     isActive: { type: Boolean, default: true },
+    /** false = la réduction ne porte que sur les produits SANS promotion en cours (les produits soldés sont exclus). Anciens coupons : true. */
+    appliesToSaleItems: { type: Boolean, default: true },
     /** Vide = utilisable par tous ; sinon réservé à ces utilisateurs. */
     allowedUsers: { type: [{ type: Schema.Types.ObjectId, ref: "User" }], default: [] },
     kind: { type: String, enum: ["standard", "welcome"], default: "standard", index: true },

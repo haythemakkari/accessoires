@@ -4,6 +4,7 @@ import { ORDER_STATUSES } from "@/models/Order";
 import { GOVERNORATES } from "@/lib/tunisia";
 import { PHONE_ERROR, parseTunisianPhone } from "@/lib/phone";
 import { ANNOUNCEMENTS_MAX, ANNOUNCEMENT_MAX_LENGTH } from "@/lib/announcements";
+import { ATTACHMENT_NAME, MAX_ATTACHMENTS_PER_REPLY, MAX_AUDIO_SECONDS, attachmentKind } from "@/lib/exchange-files";
 
 const objectId = z.string().regex(/^[a-f\d]{24}$/i, "Identifiant invalide");
 /** Numéro tunisien : validé puis normalisé en « +216XXXXXXXX ». */
@@ -169,6 +170,8 @@ export const couponSchema = z
     maxUses: z.number().int().min(1).nullish(),
     minOrderAmount: z.number().min(0).default(0),
     isActive: z.boolean().default(true),
+    /** Le code peut-il s'appliquer aux produits en promotion ? (non : seuls les produits non soldés sont réduits) */
+    appliesToSaleItems: z.boolean().default(true),
     allowedUsers: z.array(objectId).default([]),
   })
   .refine((c) => c.type !== "percentage" || c.value <= 100, { message: "Maximum 100%", path: ["value"] })
@@ -253,6 +256,14 @@ export const contactMessageSchema = z
   .refine((m) => m.kind !== "exchange" || !!m.orderNumber, { message: "Le numéro de commande est obligatoire pour une demande d'échange", path: ["orderNumber"] });
 
 export const exchangeReplySchema = z.object({ text: z.string().trim().min(2, "Message trop court").max(2000, "2000 caractères maximum") });
+/** Réponse du client : texte et/ou pièces jointes (photos, message vocal). Chaque pièce jointe doit venir d'un dépôt préalable du même client. */
+export const exchangeCustomerReplySchema = z
+  .object({
+    text: z.string().trim().max(2000, "2000 caractères maximum").default(""),
+    attachments: z.array(z.object({ name: z.string().regex(ATTACHMENT_NAME, "Pièce jointe invalide"), duration: z.number().min(0).max(MAX_AUDIO_SECONDS + 5).nullish() })).max(MAX_ATTACHMENTS_PER_REPLY, `${MAX_ATTACHMENTS_PER_REPLY} pièces jointes maximum`).default([]),
+  })
+  .refine((r) => r.text.length >= 2 || r.attachments.length > 0, { message: "Écrivez un message ou ajoutez une photo ou un vocal", path: ["text"] })
+  .refine((r) => r.attachments.filter((a) => attachmentKind(a.name) === "audio").length <= 1, { message: "Un seul message vocal par envoi", path: ["attachments"] });
 export const exchangePatchSchema = z.object({ status: z.enum(["open", "answered", "closed"]).optional(), isRead: z.boolean().optional() }).refine((v) => v.status !== undefined || v.isRead !== undefined, { message: "Rien à modifier" });
 
 export const orderStatusSchema = z.object({ status: z.enum(ORDER_STATUSES) });

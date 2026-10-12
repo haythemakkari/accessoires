@@ -5,8 +5,9 @@ import { Order, type OrderStatus } from "@/models/Order";
 import { Coupon } from "@/models/Coupon";
 import { AppError, notFound } from "@/lib/errors";
 import { effectivePrice, round2 } from "@/lib/utils";
+import { isSaleActive } from "@/lib/sale";
 import { assertCouponUsable, redeemCoupon, releaseCoupon } from "./coupon.service";
-import { computeDiscount, computeTotals } from "./pricing";
+import { couponDiscount, computeTotals } from "./pricing";
 import { getSettings } from "./settings.service";
 import { imageForVariantString } from "@/lib/variants";
 import { cartKey, finalUnitPrice } from "@/lib/packaging";
@@ -42,7 +43,7 @@ export async function priceCart(items: CartInput) {
       packaging = { id: String(opt._id), name: opt.name, description: opt.description || undefined, supplement: opt.price };
     }
     const basePrice = effectivePrice(p);
-    return { product: p, quantity: l.quantity, variant: l.variant, basePrice, packaging, price: finalUnitPrice(basePrice, packaging?.supplement) };
+    return { product: p, quantity: l.quantity, variant: l.variant, basePrice, packaging, price: finalUnitPrice(basePrice, packaging?.supplement), onSale: isSaleActive(p) };
   });
 
   // Le stock est partagé entre variantes d'un même produit.
@@ -55,7 +56,9 @@ export async function priceCart(items: CartInput) {
     }
   }
   const subtotal = round2(priced.reduce((s, l) => s + l.price * l.quantity, 0));
-  return { lines: priced, subtotal, qtyByProduct };
+  // Part du panier qui est en promotion à cet instant (sert aux coupons qui excluent les produits soldés).
+  const saleSubtotal = round2(priced.filter((l) => l.onSale).reduce((s, l) => s + l.price * l.quantity, 0));
+  return { lines: priced, subtotal, saleSubtotal, qtyByProduct };
 }
 
 async function generateOrderNumber() {
@@ -69,15 +72,16 @@ async function generateOrderNumber() {
 }
 
 export async function previewCart(items: CartInput, couponCode: string | undefined, userId: string | null) {
-  const { subtotal } = await priceCart(items);
+  const { subtotal, saleSubtotal } = await priceCart(items);
   let discount = 0;
+  let excludesSale = false;
   if (couponCode) {
     const coupon = await Coupon.findOne({ code: couponCode.trim().toUpperCase() });
     if (!coupon) throw new AppError("Code promo invalide", 422, "COUPON_INVALID");
     assertCouponUsable(coupon, userId, subtotal);
-    discount = computeDiscount(coupon, subtotal);
+    ({ discount, excludesSale } = couponDiscount(coupon, subtotal, saleSubtotal));
   }
-  return computeTotals(subtotal, discount, await getSettings());
+  return { ...computeTotals(subtotal, discount, await getSettings()), excludesSale };
 }
 
 type CheckoutInput = {
@@ -88,7 +92,7 @@ type CheckoutInput = {
 };
 
 export async function createOrder(input: CheckoutInput, userId: string | null) {
-  const { lines, subtotal, qtyByProduct } = await priceCart(input.items);
+  const { lines, subtotal, saleSubtotal, qtyByProduct } = await priceCart(input.items);
 
   let couponDoc = null;
   let discount = 0;
@@ -96,7 +100,7 @@ export async function createOrder(input: CheckoutInput, userId: string | null) {
     couponDoc = await Coupon.findOne({ code: input.couponCode.trim().toUpperCase() });
     if (!couponDoc) throw new AppError("Code promo invalide", 422, "COUPON_INVALID");
     assertCouponUsable(couponDoc, userId, subtotal);
-    discount = computeDiscount(couponDoc, subtotal);
+    discount = couponDiscount(couponDoc, subtotal, saleSubtotal).discount;
   }
   const totals = computeTotals(subtotal, discount, await getSettings()); // frais de livraison lus en base à chaque commande
 
